@@ -73,6 +73,28 @@ export function makeTextures(scene: Phaser.Scene) {
                 else if (d < 3.9) px(x, y, '#d7263d');
             }
     });
+    // Kimyacı Ronaldinho's exploding football (drawn at 2x so its pixels match the sprites)
+    canvasTex(scene, 'football', 12, 12, (c) => {
+        const rows = [
+            '....kkkk....',
+            '..kkwwwwkk..',
+            '.kwwkkwwwwk.',
+            '.kwkkkkwwwk.',
+            'kwwwkkwwkkwk',
+            'kkwwwwwkkkwk',
+            'kkwwwwwwkkwk',
+            'kwwkwwwwwwwk',
+            '.kkkkwwkkwk.',
+            '.kkkwwwkkkk.',
+            '..kkwwwkkk..',
+            '....kkkk....',
+        ];
+        rows.forEach((row, y) => [...row].forEach((ch, x) => {
+            if (ch === '.') return;
+            c.fillStyle = ch === 'k' ? '#1b0f12' : '#f7f3ea';
+            c.fillRect(x, y, 1, 1);
+        }));
+    });
     // Memduh's tracer: a hot white head, a yellow body and a fading orange tail (drawn pointing right, rotated to fly)
     canvasTex(scene, 'bolt', 16, 6, (c) => {
         const rows: [number, number][] = [[0, 0.18], [1, 0.55], [2, 1], [3, 1], [4, 0.55], [5, 0.18]];

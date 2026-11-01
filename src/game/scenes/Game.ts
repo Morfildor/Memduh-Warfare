@@ -70,6 +70,7 @@ const ENEMY_QUOTES: Partial<Record<EnemyKind, string[]>> = {
     teacher: ['Aa Jelibon mu? Geliyorum hemen.', 'Ensemi kimseye traşlatmam!'],
     heavy: ['Armutlara taklayla girmeyin. Bıktım'], // the user's joke: keep this wording exactly
     chem: ['Sarhoş mu geldiniz siz buraya?'], // the user's joke: keep this wording exactly
+    dinho: ['Memduh kafa topu geliyor yakala'], // the user's joke: keep this wording exactly
     tank: ['Bu ayın taksidi nerde lan?', 'Ödemeler gecikti. Perişan edicem sizi.'], // the user's jokes: keep this wording exactly
 };
 
@@ -1523,9 +1524,14 @@ export class Game extends Scene {
     }
 
     private enemyShoot(e: Enemy) {
+        const p = this.p;
+        if (e.kind === 'dinho') {
+            // her raised hand on the throw frame; like every mortar it gives a ring to read and a jump clears the blast
+            this.mortar(e.x - 34, e.y - 113, Phaser.Math.Clamp(p.x + rnd(-10, 30), 16, W - 60), 1.2, 'football');
+            return;
+        }
         const b = this.ebullets.find((q) => !q.on);
         if (!b) return;
-        const p = this.p;
         // the Vespa rider holds his pistol out at arm's length, higher and further forward than a standing soldier
         const chem = e.kind === 'chem';
         const mx = e.kind === 'teacher' ? e.x - 70 : chem ? e.x - 42 : e.x - 30;
@@ -1539,7 +1545,7 @@ export class Game extends Scene {
         const ang = Math.atan2(p.y - aimH - my, p.x - mx);
         b.on = true; b.mortar = false; b.passed = false; b.x = mx; b.y = my;
         b.vx = Math.cos(ang) * e.def.bulletSpeed; b.vy = Math.sin(ang) * e.def.bulletSpeed * 0.6;
-        b.s.setVisible(true).setPosition(mx, my).setScale(2).setRotation(0).setTint(chem ? 0x6bff5a : 0xffffff);
+        b.s.setVisible(true).setTexture('ebullet').setPosition(mx, my).setScale(2).setRotation(0).setTint(chem ? 0x6bff5a : 0xffffff);
         b.marker.setVisible(false);
         if (chem) this.fx.sparks(mx, my, 5, 0x6bff5a, 110, -1);
         const f = this.flashes.find((q) => q.t <= 0);
@@ -1550,12 +1556,12 @@ export class Game extends Scene {
         Sound.play('enemyShot');
     }
 
-    private mortar(fromX: number, fromY: number, tx: number, T: number) {
+    private mortar(fromX: number, fromY: number, tx: number, T: number, tex = 'ebullet') {
         const b = this.ebullets.find((q) => !q.on);
         b?.s.clearTint();
         if (!b) return;
         b.on = true; b.mortar = true; b.passed = true; b.t = 0; b.T = T; b.x0 = fromX; b.y0 = fromY; b.tx = tx; b.x = fromX; b.y = fromY;
-        b.s.setVisible(true).setScale(3).setPosition(fromX, fromY);
+        b.s.setVisible(true).setTexture(tex).setScale(tex === 'ebullet' ? 3 : 2).setPosition(fromX, fromY);
         b.marker.setVisible(true).setPosition(tx, GROUND_Y + 2).setScale(0.9, 0.22).setAlpha(0.5);
         Sound.play('bomb');
     }
@@ -1563,6 +1569,7 @@ export class Game extends Scene {
     private mortarBlast(b: EBullet) {
         this.fx.explosion(b.tx, GROUND_Y - 10, 1.5);
         Sound.play('explode', 1.2);
+        if (b.s.texture.key === 'football') this.fx.text(b.tx, GROUND_Y - 70, 'GOL!', '#ffe36b', 18);
         const p = this.p;
         if (Math.abs(p.x - b.tx) < 46 && GROUND_Y - p.y < 26 && !p.dead) this.hurtPlayer(1);
     }
@@ -2192,7 +2199,7 @@ export class Game extends Scene {
                 e.vx = 70 + e.kb * 0.3;
                 if (Math.random() < 0.4) this.fx.text(e.x, e.y - e.def.h - 22, SHOUTS[Math.floor(Math.random() * SHOUTS.length)], '#ffd23c', 16);
             }
-            if (Math.random() < 0.05 + (e.kind === 'armor' || e.kind === 'heavy' || e.kind === 'teacher' || e.kind === 'chem' ? 0.09 : 0)) this.spawnPickup(this.randomPickup(), e.x, GROUND_Y - 40);
+            if (Math.random() < 0.05 + (e.kind === 'armor' || e.kind === 'heavy' || e.kind === 'teacher' || e.kind === 'chem' || e.kind === 'dinho' ? 0.09 : 0)) this.spawnPickup(this.randomPickup(), e.x, GROUND_Y - 40);
         }
         if (this.kills === 1) this.dlg.say('firstKill', { priority: 'high' });
         else if (this.combo === 8) this.dlg.say('combo');

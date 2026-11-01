@@ -7,7 +7,7 @@ import { EnemyKind } from './enemies';
 // ENEMY_QUOTES (scenes/Game.ts) and a `head` height in enemies.ts so the balloon's tail reaches them. Their name rides
 // above their head on a gold plate.
 // ---------------------------------------------------------------------------------------------
-export const CAMEO_ENEMIES: EnemyKind[] = ['teacher', 'heavy', 'chem'];
+export const CAMEO_ENEMIES: EnemyKind[] = ['teacher', 'heavy', 'chem', 'dinho'];
 
 /** seconds between cameo enemies [min, max]; the first one arrives a little sooner */
 export const CAMEO_ENEMY_EVERY: [number, number] = [34, 48];

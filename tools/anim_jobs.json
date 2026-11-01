@@ -123,6 +123,23 @@
   "colors": 30,
   "ref": "first"
  },
+ "dinho_walk": {
+  "job": "b57b3f32-1ca9-4dca-8eb5-7248af163e08",
+  "pal": "dinho",
+  "colors": 30
+ },
+ "dinho_shoot": {
+  "job": "cb87d85f-24dd-4460-856c-4afadb373524",
+  "pal": "dinho",
+  "colors": 30,
+  "ref": "first"
+ },
+ "dinho_death": {
+  "job": "dfa86b95-8a8f-4fd9-a6aa-3543ae675d44",
+  "pal": "dinho",
+  "colors": 30,
+  "ref": "first"
+ },
  "tank_idle": {
   "job": "487dbc45-7c5a-4faf-a269-047121cbf879",
   "pal": "tank",
