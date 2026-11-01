@@ -1,4 +1,4 @@
-import { Scene, Textures } from 'phaser';
+import { Scene } from 'phaser';
 import { COLORS, H, W } from '../constants';
 import { SHEETS } from '../data/anims';
 import { FRIENDS } from '../data/friends';
@@ -88,8 +88,6 @@ export class Preloader extends Scene {
             this.load.start();
             return;
         }
-        // the control buttons and menu plate are smooth 8x / 5x art drawn 1:1 at K, so they want LINEAR (pixelArt makes everything NEAREST)
-        for (const n of ['btn_fire', 'btn_bomb', 'btn_jump', 'btn_duck', 'btn_pompa', 'plate_big']) this.textures.get(n)?.setFilter(Textures.FilterMode.LINEAR);
         makeTextures(this);
         makeBossPortraits(this);
         makeFriendBadge(this);

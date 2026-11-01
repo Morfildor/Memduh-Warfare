@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
 import { FONT, H, K, W } from '../constants';
 
-const BTN_S = 1.12;
-const BTN_RES = 8;
-/** btn_bomb.png is 19x26 art px at 3 * BTN_S: its round body is centred 3 art px below the image centre and 32 units wide in radius */
-const BOMB_BODY_DY = 3 * 3 * BTN_S;
+/** design units per art pixel of the button faces (btn_*.png are true pixel art; 1.5 units = 3 canvas px at K=2) */
+const BTN_PX = 1.5;
+/** btn_bomb.png has a fuse on top, so its round body is centred 6 art px below the image centre */
+const BOMB_BODY_DY = 6 * BTN_PX;
 const BOMB_RING_R = 36;
 
 export type BtnId = 'fire' | 'bomb' | 'jump' | 'pompa' | 'duck';
@@ -17,7 +17,6 @@ interface Btn {
     r: number;
     root: Phaser.GameObjects.Container;
     face: Phaser.GameObjects.Image;
-    baseScale: number;
     pressed: boolean;
     pulse: number;
 }
@@ -44,25 +43,24 @@ export class Controls {
     private offs: (() => void)[] = [];
 
     constructor(private scene: Phaser.Scene, ui: Phaser.GameObjects.Container) {
-        const mk = (id: BtnId, x: number, y: number, r: number, tex: string, scale: number, caption: string): Btn => {
-            scale /= BTN_RES; // the face art is drawn BTN_RES x larger than the old pixel art, so it shows at the same size
-            const face = scene.add.image(0, 0, tex).setScale(scale);
-            const shadow = scene.add.image(0, 5, tex).setScale(scale).setTint(0x000000).setAlpha(0.35);
+        const mk = (id: BtnId, x: number, y: number, r: number, tex: string, caption: string): Btn => {
+            const face = scene.add.image(0, 0, tex).setScale(BTN_PX);
+            const shadow = scene.add.image(0, 5, tex).setScale(BTN_PX).setTint(0x000000).setAlpha(0.35);
             const cap = scene.add
                 .text(0, r + 10, caption, { fontFamily: FONT, fontSize: '12px', color: '#fff8e0', stroke: '#1b0f12', strokeThickness: 3, resolution: K })
                 .setOrigin(0.5);
             const root = scene.add.container(x, y, [shadow, face, cap]);
             ui.add(root);
-            return { id, x, y, r, root, face, baseScale: scale, pressed: false, pulse: 0 };
+            return { id, x, y, r, root, face, pressed: false, pulse: 0 };
         };
         this.btns = {
             // the game is zoomed out (W 360 -> 440), so the thumb targets are scaled up to stay as big on a phone as before
-            fire: mk('fire', W - 68, H - 110, 56, 'btn_fire', 3.5 * BTN_S, 'ATEŞ'),
-            bomb: mk('bomb', W - 172, H - 82, 40, 'btn_bomb', 3 * BTN_S, 'BOMBA'),
-            jump: mk('jump', 68, H - 110, 54, 'btn_jump', 3.5 * BTN_S, 'ZIPLA'),
-            pompa: mk('pompa', W - 78, H - 226, 47, 'btn_pompa', 3.5 * BTN_S, 'POMPA'),
+            fire: mk('fire', W - 68, H - 110, 56, 'btn_fire', 'ATEŞ'),
+            bomb: mk('bomb', W - 172, H - 82, 40, 'btn_bomb', 'BOMBA'),
+            jump: mk('jump', 68, H - 110, 54, 'btn_jump', 'ZIPLA'),
+            pompa: mk('pompa', W - 78, H - 226, 47, 'btn_pompa', 'POMPA'),
             // bottom row between jump and bomb: anywhere higher would cover Memduh
-            duck: mk('duck', 168, H - 84, 40, 'btn_duck', 3 * BTN_S, 'EĞİL'),
+            duck: mk('duck', 168, H - 84, 40, 'btn_duck', 'EĞİL'),
         };
         // the ring sits lower than the button's centre, so its caption steps down out of the way
         (this.btns.bomb.root.list[2] as Phaser.GameObjects.Text).y += 8;
@@ -94,8 +92,8 @@ export class Controls {
     }
 
     private look(b: Btn) {
-        // pressed buttons shrink slightly, darken and sink, which reads clearly under a thumb
-        b.face.setScale(b.baseScale * (b.pressed ? 0.93 : 1)).setY(b.pressed ? 4 : 0);
+        // pressed buttons darken and sink, which reads clearly under a thumb (a shrink would smear the pixel art)
+        b.face.setY(b.pressed ? 4 : 0);
         b.face.setTint(b.pressed ? 0xc8c8c8 : 0xffffff);
     }
 
@@ -209,7 +207,6 @@ export class Controls {
         }
         if (ready) {
             pb.pulse += dt * 7;
-            pb.root.setScale(1 + Math.sin(pb.pulse) * 0.05);
             this.pompaRing.clear();
             this.pompaRing.lineStyle(4, 0xffffff, 0.5 + 0.4 * Math.sin(pb.pulse * 1.4));
             this.pompaRing.strokeCircle(0, 0, 50 + Math.sin(pb.pulse) * 3);
