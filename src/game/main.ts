@@ -5,6 +5,9 @@ import { MainMenu } from './scenes/MainMenu';
 import { AUTO, Game, Scale } from 'phaser';
 import { Preloader } from './scenes/Preloader';
 import { H, K, W } from './constants';
+import { installSmoothText } from './ui/smoothText';
+
+installSmoothText();
 
 const config: Phaser.Types.Core.GameConfig = {
     type: AUTO,
