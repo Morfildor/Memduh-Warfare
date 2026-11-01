@@ -9,6 +9,19 @@ import { label, menuButton, setupCamera } from '../ui/util';
 
 /** How fast the menu's world scrolls past: stage 1's speed, so the running feet match the ground. */
 const MENU_SPEED = 92;
+/** design units per art pixel of the logo atlas (3 canvas px at K=2) */
+const LOGO_PX = 1.5;
+/** title_logo.png atlas frames [x, y, w, h] and the two rows of the logo: [frame, x offset in art px]; a tea glass with a face ends the first word */
+const LOGO_FRAMES: Record<string, number[]> = {
+    M0: [0, 0, 38, 43], E0: [38, 0, 28, 43], D0: [66, 0, 32, 43], U0: [98, 0, 32, 43], H0: [130, 0, 32, 43], G0: [162, 0, 30, 43],
+    W1: [192, 0, 42, 43], A1: [234, 0, 34, 43], R1: [268, 0, 32, 43], F1: [300, 0, 28, 43], E1: [328, 0, 28, 43],
+    plate0: [0, 43, 228, 47], plate1: [228, 43, 228, 47], steam: [0, 90, 10, 16],
+};
+const LOGO_ROWS: [string, number][][] = [
+    [['M0', 0], ['E0', 37], ['M0', 64], ['D0', 101], ['U0', 132], ['H0', 163], ['G0', 194]],
+    [['W1', 0], ['A1', 41], ['R1', 74], ['F1', 105], ['A1', 132], ['R1', 165], ['E1', 196]],
+];
+const LOGO_TOPS = [40.5, 109.5];
 
 export class MainMenu extends Scene {
     private backdrop!: Backdrop;
@@ -30,13 +43,10 @@ export class MainMenu extends Scene {
         this.backdrop = new Backdrop(this, true);
 
         // title
-        const title = this.add.container(W / 2, 92).setDepth(100);
-        const a = label(this, 0, -22, 'MEMDUH', { size: 54, color: '#ffc23c', stroke: '#6a1d00', strokeW: 9 });
-        const b = label(this, 4, 28, 'WARFARE', { size: 46, color: '#e8233a', stroke: '#1b0f12', strokeW: 9 });
-        b.setAngle(-3);
-        const sub = label(this, 0, 68, 'Çay Soğumadan!', { size: 18, color: '#fff1cf', stroke: '#6a1d00', strokeW: 5 });
-        title.add([a, b, sub]);
-        this.tweens.add({ targets: title, scale: { from: 0.96, to: 1.03 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+        // a pixel-art logo: chunky hand-drawn letters (one atlas, 1.5 design units per art px like the buttons), a tea glass
+        // with steam; everything moves in whole art pixels so nothing ever smears
+        this.buildLogo();
+        label(this, W / 2, 190, 'Çay Soğumadan!', { size: 18, color: '#fff1cf', stroke: '#6a1d00', strokeW: 5 }).setDepth(100);
 
         // Memduh and the camel run together; the world scrolls under them at the game's own pace
         this.add.image(104, GROUND_Y + 2, 'shadow').setScale(4.4, 2.6).setDepth(8);
@@ -146,9 +156,64 @@ export class MainMenu extends Scene {
         this.panel = c;
     }
 
+    private logo: { img: Phaser.GameObjects.Image; x: number; y: number; delay: number; wave: number }[] = [];
+    private steam: Phaser.GameObjects.Image[] = [];
+    private plates: Phaser.GameObjects.Image[] = [];
+
+    private buildLogo() {
+        const U = LOGO_PX;
+        const tex = this.textures.get('title_logo');
+        for (const [n, f] of Object.entries(LOGO_FRAMES)) if (!tex.has(n)) tex.add(n, 0, f[0], f[1], f[2], f[3]);
+        // objects of a previous visit are destroyed with the scene: forget them
+        this.logo = [];
+        this.steam = [];
+        this.plates = [];
+        const rowW = 220;
+        const left = W / 2 - (rowW * U) / 2;
+        let glassX = 0;
+        LOGO_ROWS.forEach((row, r) => {
+            const top = LOGO_TOPS[r];
+            // one solid ink silhouette behind each word: letters read as one mass and the sky never shows through the gaps
+            this.plates.push(this.add.image(left - 4 * U, top - 4 * U, 'title_logo', 'plate' + r).setOrigin(0, 0).setScale(U).setDepth(99).setAlpha(0));
+            row.forEach(([key, off], i) => {
+                const img = this.add.image(0, 0, 'title_logo', key).setOrigin(0, 0).setScale(U).setDepth(100).setAlpha(0);
+                this.logo.push({ img, x: left + (off - 2) * U, y: top - 2 * U, delay: 0.1 + (r * 7 + i) * 0.07, wave: i + r * 3 });
+                if (key === 'G0') glassX = left + off * U;
+            });
+        });
+        for (let i = 0; i < 2; i++) this.steam.push(this.add.image(glassX + (i ? 12 : 6) * U, 0, 'title_logo', 'steam').setOrigin(0, 0).setScale(U).setDepth(100).setAlpha(0));
+    }
+
+    private updateLogo() {
+        const U = LOGO_PX;
+        const snap = (v: number) => Math.round(v * 2) / 2; // whole canvas pixels at K=2
+        const bounce = (p: number) => {
+            const n1 = 7.5625, d1 = 2.75;
+            if (p < 1 / d1) return n1 * p * p;
+            if (p < 2 / d1) return n1 * (p -= 1.5 / d1) * p + 0.75;
+            if (p < 2.5 / d1) return n1 * (p -= 2.25 / d1) * p + 0.9375;
+            return n1 * (p -= 2.625 / d1) * p + 0.984375;
+        };
+        let done = true;
+        for (const l of this.logo) {
+            const p = Phaser.Math.Clamp((this.t - l.delay) / 0.55, 0, 1);
+            if (p < 1) done = false;
+            const drop = (1 - bounce(p)) * -190;
+            // after landing, a quick wave of 0 to 3 art px hops through the letters now and then
+            const hop = p < 1 ? 0 : Math.round(Math.pow(Math.max(0, Math.sin(this.t * 2.6 - l.wave * 0.5)), 6) * 3) * U;
+            l.img.setAlpha(p > 0 ? 1 : 0).setPosition(snap(l.x), snap(l.y + drop - hop));
+        }
+        this.plates.forEach((p) => p.setAlpha(Phaser.Math.Clamp(this.t / 0.25, 0, 1)));
+        this.steam.forEach((s, i) => {
+            const ph = Math.floor((this.t * 5 + i * 4) % 9);
+            s.setAlpha(done ? 1 - ph / 9 : 0).setPosition(s.x, snap(LOGO_TOPS[0] - 17 * U - ph * U));
+        });
+    }
+
     update(_t: number, delta: number) {
         const dt = Math.min(0.05, delta / 1000);
         this.t += dt;
+        this.updateLogo();
         this.backdrop.update(dt, MENU_SPEED * dt);
         this.hero.setFrame(Math.floor(this.t * (8 + MENU_SPEED * 0.04)) % 16); // same cadence as the run in Game.ts
         this.camel.setFrame(Math.floor(this.t * 14) % 16);
