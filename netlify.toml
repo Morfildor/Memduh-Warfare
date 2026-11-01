@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build-nolog"
+  publish = "dist"
+
+# Sprites keep their names when redrawn, so an hour at most; the HTML must always be fresh.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"

@@ -1,0 +1,66 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #1b0f12;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    /* keep the HUD and buttons clear of notches and the home indicator */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: radial-gradient(ellipse at center, #3a2118 0%, #1b0f12 70%);
+}
+
+#rotate-hint {
+    display: none;
+}
+
+/* the game is portrait-only: on a phone held sideways, ask to turn it */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+    #rotate-hint {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        background: #1b0f12;
+        color: #ffc23c;
+        font: 900 20px "Arial Black", "Trebuchet MS", Impact, sans-serif;
+        text-align: center;
+    }
+    #rotate-hint span {
+        font-size: 44px;
+        display: block;
+        animation: rotate-hint-tilt 1.6s ease-in-out infinite;
+    }
+}
+
+@keyframes rotate-hint-tilt {
+    0%, 100% { transform: rotate(-90deg); }
+    50% { transform: rotate(0deg); }
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: block;
+    touch-action: none;
+    image-rendering: auto;
+}

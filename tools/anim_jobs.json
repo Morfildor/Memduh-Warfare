@@ -1,0 +1,166 @@
+{
+ "memduh_run": {
+  "job": "3e0fbbcc-0626-4458-bbdf-633267decc45",
+  "pal": "memduh",
+  "colors": 28
+ },
+ "memduh_runshoot": {
+  "job": "36c70c36-44ce-483a-8960-4cbcb7026178",
+  "pal": "memduh",
+  "colors": 28
+ },
+ "memduh_jump": {
+  "job": "be85458e-478d-4ef3-b6d4-232c2bc6ded0",
+  "pal": "memduh",
+  "colors": 28,
+  "ref": "first"
+ },
+ "memduh_throw": {
+  "job": "379a2ed8-3c9b-455d-8ce3-fe9b73f5bf4a",
+  "pal": "memduh",
+  "colors": 28,
+  "ref": "first"
+ },
+ "memduh_hurt": {
+  "job": "08e89a19-cc06-4c75-a124-088de1b99b5e",
+  "pal": "memduh",
+  "colors": 28,
+  "ref": "first"
+ },
+ "memduh_death": {
+  "job": "a7782b7f-c231-4f3b-963a-94f8081c6338",
+  "pal": "memduh",
+  "colors": 28,
+  "ref": "first"
+ },
+ "memduh_victory": {
+  "job": "524a764f-c315-4c56-952b-b1a55894b64b",
+  "pal": "memduh",
+  "colors": 28,
+  "ref": "first"
+ },
+ "memduh_idle": {
+  "job": "82598587-7ae3-4fa2-a05f-b4d983dbe568",
+  "pal": "memduh",
+  "colors": 28
+ },
+ "pompa_flex": {
+  "job": "53cb9a08-e61e-4a3c-b737-b8e10006e7e8",
+  "pal": "pompa",
+  "colors": 32,
+  "ref": "first"
+ },
+ "pompa_runshoot": {
+  "job": "6dd3de5e-2d51-46d0-8009-850317ce6918",
+  "pal": "pompa",
+  "colors": 32
+ },
+ "rifle_walk": {
+  "job": "47da234f-7dc9-490e-a424-8e4f2ebe5dac",
+  "pal": "rifle",
+  "colors": 28
+ },
+ "rifle_shoot": {
+  "job": "795949e8-21a4-4a97-babe-027a2c0ee5f2",
+  "pal": "rifle",
+  "colors": 28,
+  "ref": "first"
+ },
+ "rifle_death": {
+  "job": "eda5f77e-65ff-4bdc-8eb9-125280773072",
+  "pal": "rifle",
+  "colors": 28,
+  "ref": "first"
+ },
+ "armor_walk": {
+  "job": "efe13527-844c-479d-9b9c-4609366238a9",
+  "pal": "armor",
+  "colors": 28
+ },
+ "armor_shoot": {
+  "job": "dbb885a8-d157-4807-9ab7-42d855725556",
+  "pal": "armor",
+  "colors": 28,
+  "ref": "first"
+ },
+ "armor_death": {
+  "job": "46f75c25-61af-421c-9da6-aee2e8628219",
+  "pal": "armor",
+  "colors": 28,
+  "ref": "first"
+ },
+ "heavy_walk": {
+  "job": "0d3cd2b6-f256-42b0-9484-2d335ccc7996",
+  "pal": "heavy",
+  "colors": 30
+ },
+ "heavy_shoot": {
+  "job": "c4f18af9-35c5-42ba-959b-57436e1c586d",
+  "pal": "heavy",
+  "colors": 30,
+  "ref": "first"
+ },
+ "heavy_death": {
+  "job": "1800751c-8604-414b-a667-cb2d8cb92e0d",
+  "pal": "heavy",
+  "colors": 30,
+  "ref": "first"
+ },
+ "chem_walk": {
+  "job": "01795e2a-7e7d-4f93-9dfe-c640d02611df",
+  "pal": "chem",
+  "colors": 30
+ },
+ "chem_shoot": {
+  "job": "1704fe35-ad01-44fc-81a0-3071ee05f071",
+  "pal": "chem",
+  "colors": 30,
+  "ref": "first"
+ },
+ "chem_death": {
+  "job": "05ebcbc5-b3ac-4269-94b6-e0a4b90e62ad",
+  "pal": "chem",
+  "colors": 30,
+  "ref": "first"
+ },
+ "tank_idle": {
+  "job": "487dbc45-7c5a-4faf-a269-047121cbf879",
+  "pal": "tank",
+  "colors": 36,
+  "cell": [
+   128,
+   96
+  ],
+  "ref": "first"
+ },
+ "tank_fire": {
+  "job": "0438ad23-064d-4092-8008-eb131df776fd",
+  "pal": "tank",
+  "colors": 36,
+  "cell": [
+   128,
+   96
+  ],
+  "ref": "first"
+ },
+ "heli_fly": {
+  "job": "f438000c-6648-42e4-a92b-7f6cae87ea0a",
+  "pal": "heli",
+  "colors": 36,
+  "cell": [
+   128,
+   96
+  ],
+  "noshift": true
+ },
+ "camel_run": {
+  "job": "39983931-9667-4c8d-8ba4-001a59cc57c8",
+  "pal": "camel",
+  "colors": 32,
+  "cell": [
+   160,
+   96
+  ],
+  "base": 83
+ }
+}

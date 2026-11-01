@@ -1,0 +1,28 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/style.css
+  Cache-Control: public, max-age=3600
+
+/favicon.png
+  Cache-Control: public, max-age=3600
+
+# Sprites keep their names when redrawn: at most one hour stale.
+/assets/*
+  Cache-Control: public, max-age=3600
+
+# Fingerprinted bundles (matched rules merge, so drop the sprite value first).
+/assets/index-*.js
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/phaser-*.js
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
