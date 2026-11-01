@@ -65,21 +65,20 @@ export const FRIENDS: Friend[] = [
         id: 'kantinci', name: 'DERSHANE KANTİNCİSİ', art: 'kantinci.png', power: 'airdrop',
         catchphrases: [
             'Patso hazır abi! Uçakla yolluyorum, hesabı sonra yazarız.',
-            'Üç patso bir ayran. Havadan geliyor, kaçırma!',
-            'Kantin kapanmadan al, tost da var!',
+            'Üç patso bir mayonezli balık kraker geliyor',           
         ],
     },
     {
-        id: 'servis', name: 'SERVİS ŞOFÖRÜ CEMAL', art: 'servis.png', power: 'strike',
+        id: 'servis', name: 'MINIBUS ŞOFÖRÜ CEMAL', art: 'servis.png', power: 'strike',
         catchphrases: [
-            'Servis kalkıyor abi! Binmeyen kalır!',
-            'Camı kapat, klima var! (Klima yok.)',
+            'Taklasız binin lan minibüse!',
+            'Geçen yolda parende atan çocuklar siz misiniz?',
         ],
     },
     {
         id: 'mudur', name: 'DERSHANE MÜDÜRÜ', art: 'mudur.png', power: 'shield',
         catchphrases: [
-            'Devamsızlık yazarım, hepinize!',
+            'Denemeyi kaçıracaksın Memduh! Üst sınıfa alacağım seni',
             'Veliyi çağırın. Kalkanı da al, evladım.',
         ],
     },
