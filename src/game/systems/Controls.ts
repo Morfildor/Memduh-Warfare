@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { FONT, H, K, W } from '../constants';
 
 const BTN_S = 1.12;
+const BTN_RES = 8;
 /** btn_bomb.png is 19x26 art px at 3 * BTN_S: its round body is centred 3 art px below the image centre and 32 units wide in radius */
 const BOMB_BODY_DY = 3 * 3 * BTN_S;
 const BOMB_RING_R = 36;
@@ -44,6 +45,7 @@ export class Controls {
 
     constructor(private scene: Phaser.Scene, ui: Phaser.GameObjects.Container) {
         const mk = (id: BtnId, x: number, y: number, r: number, tex: string, scale: number, caption: string): Btn => {
+            scale /= BTN_RES; // the face art is drawn BTN_RES x larger than the old pixel art, so it shows at the same size
             const face = scene.add.image(0, 0, tex).setScale(scale);
             const shadow = scene.add.image(0, 5, tex).setScale(scale).setTint(0x000000).setAlpha(0.35);
             const cap = scene.add

@@ -50,8 +50,8 @@ export function menuButton(
     onClick: () => void, fill = 0xff7a21,
 ): PixelButton {
     // generated pixel-art plate, 9-sliced so the corners stay crisp at any width, tinted per button
-    const PX = 2.5;
-    const plate = scene.add.nineslice(0, 0, 'plate_big', undefined, w / PX, h / PX, 6, 6, 5, 7).setScale(PX);
+    const PX = 0.5; // plate_big is 250x80, drawn 5x the old 50x16 art so it maps 1:1 onto the K=2 canvas
+    const plate = scene.add.nineslice(0, 0, 'plate_big', undefined, w / PX, h / PX, 30, 30, 25, 35).setScale(PX);
     const dark = Phaser.Display.Color.IntegerToColor(fill).darken(28).color;
     const draw = (pressed: boolean) => {
         plate.setTint(pressed ? dark : fill).setY(pressed ? 3 : 0);
