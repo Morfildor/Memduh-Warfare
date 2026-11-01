@@ -25,7 +25,7 @@ export interface EnemyDef {
 // Animation sheets for each kind are named in data/anims.ts (rifle_walk, armor_shoot, tank_fire ...).
 // Scales are tuned so a soldier is about as tall as Memduh and everything fits a 360-wide screen with room to react.
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
-    rifle: { name: 'Kiralık Asker', hp: 3, w: 38, h: 78, scale: 1.7, walk: 16, score: 100, pompa: 3, fire: [2.0, 3.0], burst: 1, bulletSpeed: 170, armor: 1, flies: false },
+    rifle: { name: 'Kiralık Asker', hp: 3, w: 38, h: 78, scale: 1.45, walk: 16, score: 100, pompa: 3, fire: [2.0, 3.0], burst: 1, bulletSpeed: 170, armor: 1, flies: false },
     // gummy-bear paratroopers (the Director only ever drops them in by parachute)
     jelibon: { name: 'Jelibon Avcısı', hp: 3, w: 32, h: 62, scale: 1.45, walk: 14, score: 150, pompa: 3, fire: [2.0, 3.0], burst: 1, bulletSpeed: 170, armor: 1, flies: false },
     armor: { name: 'Salata Dönerci', hp: 12, w: 48, h: 82, scale: 1.7, walk: 10, score: 250, pompa: 6, fire: [2.6, 3.4], burst: 1, bulletSpeed: 180, armor: 0.6, flies: false },

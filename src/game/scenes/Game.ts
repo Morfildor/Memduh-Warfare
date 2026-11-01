@@ -509,9 +509,9 @@ export class Game extends Scene {
         return o.on && o.alive && !o.def.flies && o.kind !== 'teacher' && !isBoss(o) && o !== this.cameoE;
     }
 
-    /** Centre-to-centre distance two soldiers need: their drawn bodies (about 45% of the sprite cell, never less than the hit box) plus air. */
+    /** Centre-to-centre distance two soldiers need: their drawn bodies and the guns they hold out (about 58% of the sprite cell, never less than the hit box) plus air. */
     private gapBetween(a: EnemyDef, b: EnemyDef) {
-        return (Math.max(a.w, 44 * a.scale) + Math.max(b.w, 44 * b.scale)) / 2 + 8;
+        return (Math.max(a.w, 56 * a.scale) + Math.max(b.w, 56 * b.scale)) / 2 + 8;
     }
 
     /** `x` moved out to the right until it clears every soldier already out there. */

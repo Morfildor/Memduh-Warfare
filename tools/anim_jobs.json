@@ -56,24 +56,24 @@
   "colors": 32
  },
  "rifle_walk": {
-  "job": "47da234f-7dc9-490e-a424-8e4f2ebe5dac",
+  "job": "dd233e3a-bc11-460d-8da2-61ce41b38ab9",
   "pal": "rifle",
-  "colors": 28
+  "colors": 30
  },
  "rifle_shoot": {
-  "job": "795949e8-21a4-4a97-babe-027a2c0ee5f2",
+  "job": "d96a0f04-b808-43e7-acfb-d3de59ab85d6",
   "pal": "rifle",
-  "colors": 28,
+  "colors": 30,
   "ref": "first"
  },
  "rifle_death": {
-  "job": "eda5f77e-65ff-4bdc-8eb9-125280773072",
+  "job": "b430a26b-4809-4b50-b834-113fc881ec08",
   "pal": "rifle",
-  "colors": 28,
+  "colors": 30,
   "ref": "first"
  },
  "armor_walk": {
-  "job": "efe13527-844c-479d-9b9c-4609366238a9",
+  "job": "c0e66c7c-c94f-4671-ab39-d8f9550d6481",
   "pal": "armor",
   "colors": 28
  },
