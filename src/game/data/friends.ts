@@ -85,13 +85,13 @@ export const FRIENDS: Friend[] = [
 ];
 
 export const POWER_LABEL: Record<FriendPower, string> = {
-    strike: 'TOPLU DARBE!',
-    shield: 'DOST KALKANI!',
-    rapid: 'HIZLI ATEŞ!',
-    bombs: 'BOMBA YAĞMURU!',
-    heal: 'İMLA DÜZELTİLDİ! +2 ÇAY',
-    anesthesia: 'ANESTEZİ!',
-    hack: 'HACK ATAĞI!',
-    slap: 'BEL ŞAPLAĞI!',
-    airdrop: 'HAVADAN PATSO!',
+    strike: 'EKRANDAKİ HERKES PATLAR!',
+    shield: '10 SN KALKAN: HASAR YOK',
+    rapid: '10 SN HIZLI ATEŞ',
+    bombs: '3 BOMBA + DEV PATLAMA',
+    heal: '+2 ÇAY: CAN DOLDU',
+    anesthesia: 'DÜŞMANLAR 6 SN UYUR',
+    hack: '5 SN: GÖRDÜĞÜ SİLİNİR',
+    slap: 'HIZLI ATEŞ + SONSUZ BOMBA',
+    airdrop: 'PATSO YAĞIYOR: HAVADA KAP!',
 };

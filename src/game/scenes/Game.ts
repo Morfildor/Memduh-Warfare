@@ -55,6 +55,10 @@ const CAMEO_EVERY: [number, number] = [14, 19];
 /** a patso that is still this high above the ground when picked up was caught in mid-air */
 const PATSO_AIR_Y = GROUND_Y - 80;
 const HACK_TIME = 0.6;
+/** how long Tunç's hack mode lasts */
+const HACK_MODE = 5;
+/** the icon that flies from the friend banner to Memduh when a buff lands, so it is clear who got what */
+const BUFF_ICON: Partial<Record<string, string>> = { shield: 'pu_kalkan', rapid: 'pu_hizli_ates', bombs: 'pu_buyuk_bomba', heal: 'pu_can_paketi', slap: 'pu_slap' };
 /** where a cameo enemy plants himself to fight (the Vespa rider has his own SCOOTER_STOP) */
 const CAMEO_STOP = W - 120;
 /** after the final boss falls: Memduh starts his victory once the road has stopped; the result panel opens when the wreck has burnt down */
@@ -278,6 +282,16 @@ export class Game extends Scene {
     private bubbleE: Enemy | null = null;
     private bubbleQ: { e: Enemy; kind: EnemyKind; name: string; text: string; x: number; y: number }[] = [];
     private shotCount = 0;
+    /** Tunç's hack mode: while it runs, everything that comes into view is attacked (see updateHack) */
+    private hackT = 0;
+    private hackClock = 0;
+    private hackFade = 0;
+    private hackNext = new Map<Enemy, number>();
+    private hackBeams: { e: Enemy; x: number; y: number; t: number }[] = [];
+    private hackG!: Phaser.GameObjects.Graphics;
+    private hackDim!: Phaser.GameObjects.Rectangle;
+    private hackRain: Phaser.GameObjects.Text[] = [];
+    private targetWait = 0;
 
     constructor() {
         super('Game');
@@ -373,6 +387,7 @@ export class Game extends Scene {
         this.bubble = new ComicBubble(this);
         this.bubbleE = null;
         this.bubbleQ = [];
+        this.buildHack();
         this.plane = this.add.image(0, 0, 'plane').setScale(1.8).setVisible(false).setDepth(26);
         this.patsoChute = this.add.image(0, 0, 'chute').setOrigin(0.5, 1).setScale(2).setVisible(false).setDepth(29);
         this.camelShadow = this.add.image(0, 0, 'shadow').setScale(9, 2.4).setVisible(false).setDepth(9);
@@ -702,6 +717,7 @@ export class Game extends Scene {
         add('pu_hizli_ates', this.p.rapid, 10);
         add('pu_slap', this.p.infBomb, 10);
         add('pu_anesthesia', this.sleepT, STUN_TIME);
+        add('pu_hack', this.hackT, HACK_MODE);
         this.hud.setEffects(fxList);
         this.dlg.update(real);
     }
@@ -731,6 +747,7 @@ export class Game extends Scene {
         this.updateCamel(dt);
         this.updatePlane(dt);
         this.updateBubble(dt);
+        this.updateHack(dt);
 
         // The Pompa team does not wait to be found: a friend crashes in by themselves every half minute or so
         // (the friend pickups in drops are still there on top of this).
@@ -738,8 +755,16 @@ export class Game extends Scene {
         const spotlight = this.hud.bannerUp || this.bubble.active || this.bubbleQ.length > 0 || this.cameoWait || (!!this.cameoE && this.cameoE.stT < 4) || (!!this.boss && this.boss.alive && this.boss.stT < 4);
         this.cameoCd -= dt;
         if (this.cameoCd <= 0 && !p.dead && this.stageClearT < 0 && !spotlight) {
-            this.cameoCd = rnd(CAMEO_EVERY[0], CAMEO_EVERY[1]);
-            this.friendCameo();
+            // powers that act on enemies are wasted on an empty road: wait (up to 8 s) until there is something to hit
+            const next = FRIENDS[this.friendIdx % FRIENDS.length];
+            const needsFoes = next && (next.power === 'strike' || next.power === 'hack' || next.power === 'anesthesia');
+            const foes = this.enemies.filter((e) => e.on && e.alive && e.x > 20 && e.x < W - 20).length;
+            this.targetWait += dt;
+            if (!needsFoes || foes >= 2 || this.targetWait > 8) {
+                this.targetWait = 0;
+                this.cameoCd = rnd(CAMEO_EVERY[0], CAMEO_EVERY[1]);
+                this.friendCameo();
+            }
         }
         // Chatter yields the same way: the top strip never shows a line while a balloon or a title owns the scene
         if (this.bubble.active || this.bubbleQ.length > 0 || this.hud.bannerUp) this.dlg.hold(0.25);
@@ -1428,6 +1453,7 @@ export class Game extends Scene {
         const incoming = e.kind === 'teacher' && e.st === 'enter' && e.x < 0;
         e.bang.setVisible(e.tele > 0 || incoming).setPosition(incoming ? 26 : e.x - 4, e.y - d.h - 32 - Math.sin(e.t * 30) * 2);
         if (e.flash > 0) e.s.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        else if (this.hackT > 0 && this.hackNext.has(e) && Math.random() < 0.3) e.s.setTint(0x39ff6a).setTintMode(Phaser.TintModes.FILL); // a boss under attack flickers green
         else if (e.open) e.s.setTint(Math.floor(this.time.now / 90) % 2 ? 0xffee99 : 0xffffff).setTintMode(Phaser.TintModes.MULTIPLY);
         else e.s.clearTint();
     }
@@ -1435,6 +1461,88 @@ export class Game extends Scene {
     /** Where an enemy's balloon tail points: the top of their head, not the top of their (shorter) hit box. */
     private bubbleY(e: Enemy) {
         return e.y - (e.def.head ?? e.def.h + 24);
+    }
+
+    /** Falling code and a dark green wash behind the characters: the screen visibly belongs to Tunç while his hack runs. */
+    private buildHack() {
+        this.hackT = 0; this.hackClock = 0; this.hackFade = 0; this.targetWait = 0;
+        this.hackNext.clear();
+        this.hackBeams = [];
+        this.hackRain = [];
+        this.hackDim = this.add.rectangle(W / 2, H / 2, W + 8, H + 8, 0x04210c, 0).setDepth(11).setVisible(false);
+        const glyphs = '01<>/{}$#';
+        for (let i = 0; i < 14; i++) {
+            const lines: string[] = [];
+            for (let n = 0; n < 32; n++) lines.push(glyphs[Math.floor(Math.random() * glyphs.length)] + (Math.random() < 0.5 ? glyphs[Math.floor(Math.random() * glyphs.length)] : ''));
+            const t = this.add
+                .text((i + 0.5) * (W / 14), 0, lines.join('\n'), { fontFamily: 'monospace', fontSize: '14px', color: '#39ff6a', resolution: K, align: 'center', lineSpacing: 0 })
+                .setOrigin(0.5, 0).setDepth(12).setAlpha(0).setVisible(false);
+            this.hackRain.push(t);
+        }
+        this.hackG = this.add.graphics().setDepth(60);
+    }
+
+    /**
+     * While hack mode runs (HACK_MODE seconds) every ordinary soldier that steps into view is glitched and erased, a beam from
+     * the friend banner marks each one. Bigger things (bosses, cameo enemies, fliers) cannot be deleted outright: they flicker green and
+     * take a hit every second instead.
+     */
+    private updateHack(dt: number) {
+        const on = this.hackT > 0;
+        this.hackT = Math.max(0, this.hackT - dt);
+        this.hackClock += dt;
+        this.hackFade += ((on ? 1 : 0) - this.hackFade) * Math.min(1, dt * 5);
+        if (this.hackFade < 0.01) this.hackFade = 0;
+        this.hackDim.setVisible(this.hackFade > 0).setFillStyle(0x04210c, 0.42 * this.hackFade);
+        const rainH = 32 * 17;
+        this.hackRain.forEach((t, i) => {
+            t.setVisible(this.hackFade > 0).setAlpha(0.5 * this.hackFade);
+            t.y = ((this.hackClock * (70 + (i % 5) * 22) + i * 97) % (H + rainH)) - rainH;
+        });
+        if (on) {
+            for (const e of this.enemies) {
+                if (!e.on || !e.alive || e.x > W - 8 || e.x < -20) continue;
+                const big = isBoss(e) || e.def.flies || CAMEO_ENEMIES.includes(e.kind);
+                if (!big) {
+                    if (e.hack > 0 || e.st === 'drop') continue;
+                    e.hack = HACK_TIME;
+                    e.stun = 0;
+                    this.hackMark(e);
+                    continue;
+                }
+                if ((this.hackNext.get(e) ?? 0) > this.hackClock) continue;
+                this.hackNext.set(e, this.hackClock + 1);
+                this.hackMark(e);
+                this.damageEnemy(e, isBoss(e) ? 8 : e.def.flies ? 60 : Math.max(10, e.maxHp * 0.12), 'bomb', e.x, e.y - e.def.h * 0.5);
+            }
+        } else if (this.hackNext.size) this.hackNext.clear();
+        // beams
+        const g = this.hackG.clear();
+        for (let i = this.hackBeams.length - 1; i >= 0; i--) {
+            const b = this.hackBeams[i];
+            b.t -= dt;
+            if (b.t <= 0) { this.hackBeams.splice(i, 1); continue; }
+            if (b.e.on) { b.x = b.e.x; b.y = b.e.y - b.e.def.h * 0.5; }
+            const a = b.t / 0.35;
+            let px = W / 2 + rnd(-30, 30), py = 250;
+            for (const c of [0x39ff6a, 0xeaffea]) {
+                g.lineStyle(c === 0x39ff6a ? 4 : 1.5, c, a).beginPath().moveTo(px, py);
+                let qx = px, qy = py;
+                for (let s = 1; s <= 4; s++) {
+                    qx = px + (b.x - px) * (s / 4) + (s < 4 ? rnd(-12, 12) : 0);
+                    qy = py + (b.y - py) * (s / 4);
+                    g.lineTo(qx, qy);
+                }
+                g.strokePath();
+            }
+            g.lineStyle(2, 0x39ff6a, a).strokeRect(b.x - 16, b.y - 16, 32, 32); // target brackets
+        }
+    }
+
+    private hackMark(e: Enemy) {
+        this.hackBeams.push({ e, x: e.x, y: e.y - e.def.h * 0.5, t: 0.35 });
+        this.fx.text(e.x, e.y - e.def.h - 14, 'HACKED!', '#39ff6a', 12);
+        this.fx.sparks(e.x, e.y - e.def.h * 0.5, 4, 0x39ff6a, 160);
     }
 
     /** Queued, not shown: one speaker at a time, so a second enemy arriving can never cut the first one's joke short. */
@@ -2028,6 +2136,15 @@ export class Game extends Scene {
         this.fx.flash(0xffe36b, 0.25, 260);
         this.fx.shake(0.25);
         this.fx.ring(p.x, p.y - 50, 0xffe36b, 5, 0.5);
+        const buff = BUFF_ICON[f.power];
+        if (buff) {
+            // the power's icon leaves the banner and lands on Memduh, so it is clear who got it
+            const icon = this.add.image(76, 172, buff).setDepth(95);
+            this.tweens.add({
+                targets: icon, x: p.x, y: p.y - 60, duration: 550, ease: 'Cubic.in',
+                onComplete: () => { this.fx.ring(p.x, p.y - 60, 0xffe36b, 3, 0.45); this.fx.sparks(p.x, p.y - 60, 10, 0xffe36b, 170); icon.destroy(); },
+            });
+        }
         switch (f.power) {
             case 'strike':
                 for (const e of this.enemies) {
@@ -2073,13 +2190,11 @@ export class Game extends Scene {
                 break;
             }
             case 'hack':
-                // Tunç hacks the screen: ordinary enemies glitch, shrink and are deleted; bigger things take a hit
+                // Tunç takes over the screen for HACK_MODE seconds (see updateHack): whatever is in view, or walks into view, is attacked
+                this.hackT = HACK_MODE;
+                this.hackClock = 0;
                 this.fx.flash(0x39ff6a, 0.35, 320);
-                for (const e of this.enemies) {
-                    if (!e.on || !e.alive || e.x > W + 30 || e.x < -40) continue;
-                    if (isBoss(e) || e.def.flies) this.damageEnemy(e, isBoss(e) ? 20 : 60, 'bomb', e.x, e.y - 40);
-                    else e.hack = HACK_TIME;
-                }
+                this.hud.showStatus('HACK MODU: GÖRDÜĞÜ SİLİNİR!', '#39ff6a');
                 this.clearEnemyShots();
                 this.dlg.say('friendHack', { priority: 'normal' });
                 break;
