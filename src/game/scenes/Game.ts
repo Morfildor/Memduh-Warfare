@@ -461,6 +461,7 @@ export class Game extends Scene {
         if (!e) return undefined;
         e.chute.setVisible(false);
         const def = ENEMIES[kind];
+        if (!def.flies && kind !== 'teacher') x = this.clearX(def, x); // never spawn on top of a soldier: slide further out to the right
         e.kind = kind; e.def = def; e.on = true; e.alive = true; e.dying = 0; e.hp = e.maxHp = def.hp * (this.endless ? 1 + (this.stageIdx - STAGES.length) * 0.06 : 1);
         e.x = x; e.y = def.flies ? GROUND_Y - 150 : GROUND_Y; e.vx = 0; e.vy = 0; e.rot = 0; e.t = Math.random() * 3;
         // a rifleman dies fast, so he has to get his shot in early; the tougher ones can afford to take their time
@@ -501,6 +502,42 @@ export class Game extends Scene {
             this.fx.text(70, GROUND_Y - 120, 'DIT DIT!', '#ff5a3c', 14);
         }
         return e;
+    }
+
+    /** Soldiers that can bump into each other: on the ground, alive, not a boss, a Vespa rider or the cameo planted at his post. */
+    private crowds(o: Enemy) {
+        return o.on && o.alive && !o.def.flies && o.kind !== 'teacher' && !isBoss(o) && o !== this.cameoE;
+    }
+
+    /** Centre-to-centre distance two soldiers need: their drawn bodies (about 45% of the sprite cell, never less than the hit box) plus air. */
+    private gapBetween(a: EnemyDef, b: EnemyDef) {
+        return (Math.max(a.w, 44 * a.scale) + Math.max(b.w, 44 * b.scale)) / 2 + 8;
+    }
+
+    /** `x` moved out to the right until it clears every soldier already out there. */
+    private clearX(def: EnemyDef, x: number) {
+        for (let pass = 0; pass < 6; pass++) {
+            let moved = false;
+            for (const o of this.enemies) {
+                if (!this.crowds(o)) continue;
+                const g = this.gapBetween(def, o.def);
+                if (Math.abs(x - o.x) < g) {
+                    x = o.x + g;
+                    moved = true;
+                }
+            }
+            if (!moved) break;
+        }
+        return x;
+    }
+
+    /** Keeps a walking soldier from climbing onto the one ahead of him: a faster one slows to the pace of the soldier in front. */
+    private holdGap(e: Enemy) {
+        for (const o of this.enemies) {
+            if (o === e || !this.crowds(o) || o.st === 'drop' || o.x >= e.x) continue; // a canopy overhead is no obstacle
+            const lim = o.x + this.gapBetween(e.def, o.def);
+            if (e.x < lim) e.x = lim;
+        }
     }
 
     /**
@@ -1307,7 +1344,10 @@ export class Game extends Scene {
         } else {
             if (e.kind === 'teacher') this.moveScooter(e, dt);
             else if (e === this.cameoE) this.moveCameo(e, dt, scroll);
-            else e.x -= scroll + d.walk * dt;
+            else {
+                e.x -= scroll + d.walk * dt;
+                if (e.st !== 'drop' && !d.flies && !isBoss(e)) this.holdGap(e);
+            }
             // shooting (only while ahead of Memduh and on screen)
             if (e.x < W - 12 && e.x > p.x + 70 && !p.dead && (e.kind !== 'teacher' || e.st === 'hold')) {
                 if (e.tele > 0) {
