@@ -84,14 +84,28 @@ export const FRIENDS: Friend[] = [
     },
 ];
 
-export const POWER_LABEL: Record<FriendPower, string> = {
-    strike: 'EKRANDAKİ HERKES PATLAR!',
-    shield: '10 SN KALKAN: HASAR YOK',
-    rapid: '10 SN HIZLI ATEŞ',
-    bombs: '3 BOMBA + DEV PATLAMA',
-    heal: '+2 ÇAY: CAN DOLDU',
-    anesthesia: 'DÜŞMANLAR 6 SN UYUR',
-    hack: '5 SN: GÖRDÜĞÜ SİLİNİR',
-    slap: 'HIZLI ATEŞ + SONSUZ BOMBA',
-    airdrop: 'PATSO YAĞIYOR: HAVADA KAP!',
+/** The power's name, shown big on the cameo ribbon */
+export const POWER_NAME: Record<FriendPower, string> = {
+    strike: 'TOPLU DARBE!',
+    shield: 'DOST KALKANI!',
+    rapid: 'HIZLI ATEŞ!',
+    bombs: 'BOMBA YAĞMURU!',
+    heal: 'İMLA DÜZELTİLDİ!',
+    anesthesia: 'ANESTEZİ!',
+    hack: 'HACK ATAĞI!',
+    slap: 'BEL ŞAPLAĞI!',
+    airdrop: 'HAVADAN PATSO!',
+};
+
+/** What the power does, in one short line under its name */
+export const POWER_INFO: Record<FriendPower, string> = {
+    strike: 'Ekrandaki herkes patlar',
+    shield: '10 sn kalkan: hasar yok',
+    rapid: '10 sn hızlı ateş',
+    bombs: '3 bomba + dev patlama',
+    heal: '+2 çay: can dolar',
+    anesthesia: 'Gelen düşmanları uyutur',
+    hack: '3 sn: gördüğü düşman silinir',
+    slap: 'Hızlı ateş + sonsuz dev bomba',
+    airdrop: 'Patso yağar: havada kap',
 };

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { Friend, FriendPower, POWER_LABEL } from '../data/friends';
+import { Friend, FriendPower, POWER_INFO, POWER_NAME } from '../data/friends';
 import { FONT, K, W } from '../constants';
 
 const POWER_ICON: Record<FriendPower, string> = {
@@ -27,6 +27,7 @@ export class FriendCameo {
     private name: Phaser.GameObjects.Text;
     private phrase: Phaser.GameObjects.Text;
     private power: Phaser.GameObjects.Text;
+    private info: Phaser.GameObjects.Text;
     private icon: Phaser.GameObjects.Image;
 
     /** `y` is where the banner rests (design units from the top). */
@@ -46,9 +47,12 @@ export class FriendCameo {
             .setOrigin(0, 0);
         this.icon = scene.add.image(0, 0, 'pu_kalkan').setScale(0.7);
         this.power = scene.add
-            .text(0, 0, '', { fontFamily: FONT, fontSize: '12px', color: '#2a1230', resolution: K })
+            .text(0, 0, '', { fontFamily: FONT, fontSize: '14px', color: '#2a1230', resolution: K })
             .setOrigin(0, 0.5);
-        this.root = scene.add.container(10, y - 90, [this.bg, this.burst, this.frame, this.portrait, this.name, this.phrase, this.icon, this.power]);
+        this.info = scene.add
+            .text(0, 0, '', { fontFamily: FONT, fontSize: '11px', color: '#4a2a14', resolution: K })
+            .setOrigin(0, 0.5);
+        this.root = scene.add.container(10, y - 90, [this.bg, this.burst, this.frame, this.portrait, this.name, this.phrase, this.icon, this.power, this.info]);
         this.root.setVisible(false).setAlpha(0);
         ui.add(this.root);
     }
@@ -94,15 +98,16 @@ export class FriendCameo {
         this.frame.fillStyle(0x1b0f12, 1).fillRoundedRect(cx - 53, cy - 48, 106, 96, 8);
         this.frame.lineStyle(2, 0xffe36b, 1).strokeRoundedRect(cx - 53, cy - 48, 106, 96, 8);
 
-        // ribbon under the name row: what the friend does
+        // ribbon under the text: the power's name, and what it does underneath
         const label = this.power.text;
-        const rw = this.power.width + 46;
+        const rw = Math.max(this.power.width, this.info.width) + 50;
         const rx = BOX_W - rw - 12;
-        const ry = bh - 22;
-        f.fillStyle(0xffc23c, 1).fillRoundedRect(rx, ry - 10, rw, 20, 10);
-        f.lineStyle(2, 0x1b0f12, 1).strokeRoundedRect(rx, ry - 10, rw, 20, 10);
-        this.icon.setPosition(rx + 14, ry).setVisible(!!label);
-        this.power.setPosition(rx + 34, ry);
+        const ry = bh - 28;
+        f.fillStyle(0xffc23c, 1).fillRoundedRect(rx, ry - 17, rw, 34, 12);
+        f.lineStyle(2, 0x1b0f12, 1).strokeRoundedRect(rx, ry - 17, rw, 34, 12);
+        this.icon.setPosition(rx + 16, ry).setVisible(!!label);
+        this.power.setPosition(rx + 36, ry - 7);
+        this.info.setPosition(rx + 36, ry + 8);
     }
 
     /** Returns how many seconds the banner stays up. */
@@ -117,11 +122,12 @@ export class FriendCameo {
         if (this.name.width > room) this.name.setFontSize(Math.floor((20 * room) / this.name.width));
         const line = friend.catchphrases[Math.floor(Math.random() * friend.catchphrases.length)] ?? '';
         this.phrase.setText(`"${line}"`);
-        this.power.setText(POWER_LABEL[friend.power] ?? power);
+        this.power.setText(POWER_NAME[friend.power] ?? power);
+        this.info.setText(POWER_INFO[friend.power] ?? '');
         const tex = POWER_ICON[friend.power];
         this.icon.setTexture(this.scene.textures.exists(tex) ? tex : 'pu_kalkan');
         // room for the ribbon under the text
-        const bh = Math.max(120, Math.ceil(this.phrase.height) + 36 + 38);
+        const bh = Math.max(128, Math.ceil(this.phrase.height) + 36 + 50);
         this.draw(bh);
 
         const hold = Math.min(8000, 4400 + line.length * 55);

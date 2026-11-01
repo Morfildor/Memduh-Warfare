@@ -2,7 +2,8 @@ import { Save } from './Save';
 
 type Sfx =
     | 'shoot' | 'bomb' | 'explode' | 'jump' | 'land' | 'hit' | 'kill' | 'pickup' | 'hurt'
-    | 'combo' | 'pompa' | 'pompaReady' | 'ui' | 'boss' | 'win' | 'lose' | 'empty' | 'enemyShot';
+    | 'combo' | 'pompa' | 'pompaReady' | 'ui' | 'boss' | 'win' | 'lose' | 'empty' | 'enemyShot'
+    | 'heal' | 'slap' | 'sleep' | 'hack' | 'shield';
 
 /** Tiny WebAudio chiptune synth: effects plus a looping tune. Everything is generated, nothing is downloaded. */
 class AudioSystem {
@@ -140,6 +141,24 @@ class AudioSystem {
                 break;
             case 'ui':
                 this.tone('square', 700, 900, 0.05, 0.1);
+                break;
+            case 'heal': // a soft rising chime, one note per glass of tea
+                [784, 988, 1175, 1568].forEach((f, i) => this.tone('triangle', f, f * 1.01, 0.22, 0.16, i * 0.09));
+                break;
+            case 'slap': // a flat crack and a thump
+                this.noise(0.07, 0.5, 6000, 900);
+                this.tone('square', 220, 70, 0.12, 0.28);
+                break;
+            case 'sleep': // a falling lullaby
+                [659, 587, 523, 440, 392].forEach((f, i) => this.tone('triangle', f, f * 0.98, 0.3, 0.12, i * 0.16));
+                break;
+            case 'hack': // a glitchy stutter
+                [900, 300, 1200, 200, 700].forEach((f, i) => this.tone('square', f, f * 0.5, 0.05, 0.1, i * 0.045));
+                this.noise(0.22, 0.12, 5000, 800, 0.05);
+                break;
+            case 'shield':
+                this.tone('sine', 300, 900, 0.3, 0.2);
+                this.tone('triangle', 600, 1500, 0.3, 0.1, 0.05);
                 break;
             case 'empty':
                 this.tone('square', 160, 120, 0.08, 0.12);

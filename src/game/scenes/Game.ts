@@ -1,11 +1,11 @@
 import { Scene } from 'phaser';
 import * as Phaser from 'phaser';
 import { CAMEO_ENEMIES, CAMEO_ENEMY_EVERY, CAMEO_ENEMY_FIRST } from '../data/cameoEnemies';
-import { FONT, GROUND_Y, H, K, PLAYER_X, TYPE, W } from '../constants';
+import { COLORS, FONT, GROUND_Y, H, K, PLAYER_X, TYPE, W } from '../constants';
 import { FOOT_Y, Humanoid, SHOOT_TIMING, THROW, THROW_POMPA } from '../data/anims';
 import { EnemyDef, EnemyKind, ENEMIES } from '../data/enemies';
 import { endlessStage, StageDef, STAGES } from '../data/stages';
-import { FRIENDS } from '../data/friends';
+import { Friend, FRIENDS } from '../data/friends';
 import { Backdrop } from '../systems/Backdrop';
 import { Sound } from '../systems/Audio';
 import { Controls } from '../systems/Controls';
@@ -46,7 +46,9 @@ const SHOUTS = ['PAT!', 'ÇAT!', 'BAM!', 'HÖRR!', 'TAK!', 'PIÇ!', 'VAY ANAM!',
 /** where Motor Ahmet parks his Vespa to shoot */
 const SCOOTER_STOP = W - 98;
 /** Melike's anesthesia lasts this long; Tunç's hack takes this long to erase an enemy */
-const STUN_TIME = 6;
+const STUN_TIME = 4;
+/** what the sleepers dream of */
+const DREAMS = ['DÜRÜM', 'ÇAY', 'ARMUT', 'TAKLA', 'PATSO', 'MAAŞ', 'İZİN', 'KEBAP'];
 /** seconds between power-up drops, and between friend pickups */
 const PICKUP_GAP = 18;
 const FRIEND_GAP = 14;
@@ -56,9 +58,9 @@ const CAMEO_EVERY: [number, number] = [14, 19];
 const PATSO_AIR_Y = GROUND_Y - 80;
 const HACK_TIME = 0.6;
 /** how long Tunç's hack mode lasts */
-const HACK_MODE = 5;
+const HACK_MODE = 3;
 /** the icon that flies from the friend banner to Memduh when a buff lands, so it is clear who got what */
-const BUFF_ICON: Partial<Record<string, string>> = { shield: 'pu_kalkan', rapid: 'pu_hizli_ates', bombs: 'pu_buyuk_bomba', heal: 'pu_can_paketi', slap: 'pu_slap' };
+const BUFF_ICON: Partial<Record<string, string>> = { shield: 'pu_kalkan', rapid: 'pu_hizli_ates', bombs: 'pu_buyuk_bomba' };
 /** where a cameo enemy plants himself to fight (the Vespa rider has his own SCOOTER_STOP) */
 const CAMEO_STOP = W - 120;
 /** after the final boss falls: Memduh starts his victory once the road has stopped; the result panel opens when the wreck has burnt down */
@@ -292,6 +294,15 @@ export class Game extends Scene {
     private hackDim!: Phaser.GameObjects.Rectangle;
     private hackRain: Phaser.GameObjects.Text[] = [];
     private targetWait = 0;
+    /** Melike's sleep: who has already been put to sleep this cast, how long each nap lasts, the dream words, the night wash and the thought clouds */
+    private slept = new Set<Enemy>();
+    private sleepLen = new Map<Enemy, number>();
+    private dreamWord = new Map<Enemy, string>();
+    private sleepFade = 0;
+    private sleepWarned = false;
+    private sleepDim!: Phaser.GameObjects.Rectangle;
+    private dreams: { c: Phaser.GameObjects.Container; t: Phaser.GameObjects.Text }[] = [];
+    private shieldG!: Phaser.GameObjects.Graphics;
 
     constructor() {
         super('Game');
@@ -388,6 +399,7 @@ export class Game extends Scene {
         this.bubbleE = null;
         this.bubbleQ = [];
         this.buildHack();
+        this.buildFriendFx();
         this.plane = this.add.image(0, 0, 'plane').setScale(1.8).setVisible(false).setDepth(26);
         this.patsoChute = this.add.image(0, 0, 'chute').setOrigin(0.5, 1).setScale(2).setVisible(false).setDepth(29);
         this.camelShadow = this.add.image(0, 0, 'shadow').setScale(9, 2.4).setVisible(false).setDepth(9);
@@ -490,6 +502,7 @@ export class Game extends Scene {
         e.fireT = kind === 'rifle' || kind === 'jelibon' ? rnd(0.1, 0.7) : rnd(def.fire[0] * 0.5, def.fire[1] * 0.8); e.burst = 0; e.burstT = 0; e.tele = 0; e.flash = 0; e.kb = 0; e.touched = false;
         e.st = 'enter'; e.stT = 0; e.open = false; e.volley = 0; e.life = 0;
         e.shootT = -1; e.stun = 0; e.hack = 0;
+        this.slept.delete(e); this.sleepLen.delete(e); this.dreamWord.delete(e); this.hackNext.delete(e);
         this.styleTag(e.tag, CAMEO_ENEMIES.includes(kind));
         e.tag.setText(def.name).setVisible(false);
         e.said = false;
@@ -748,6 +761,7 @@ export class Game extends Scene {
         this.updatePlane(dt);
         this.updateBubble(dt);
         this.updateHack(dt);
+        this.updateFriendFx(dt);
 
         // The Pompa team does not wait to be found: a friend crashes in by themselves every half minute or so
         // (the friend pickups in drops are still there on top of this).
@@ -755,12 +769,9 @@ export class Game extends Scene {
         const spotlight = this.hud.bannerUp || this.bubble.active || this.bubbleQ.length > 0 || this.cameoWait || (!!this.cameoE && this.cameoE.stT < 4) || (!!this.boss && this.boss.alive && this.boss.stT < 4);
         this.cameoCd -= dt;
         if (this.cameoCd <= 0 && !p.dead && this.stageClearT < 0 && !spotlight) {
-            // powers that act on enemies are wasted on an empty road: wait (up to 8 s) until there is something to hit
-            const next = FRIENDS[this.friendIdx % FRIENDS.length];
-            const needsFoes = next && (next.power === 'strike' || next.power === 'hack' || next.power === 'anesthesia');
-            const foes = this.enemies.filter((e) => e.on && e.alive && e.x > 20 && e.x < W - 20).length;
+            // a friend comes when their power would help (pickFriend); if nobody's would, wait up to 3 s, then the rotation goes on
             this.targetWait += dt;
-            if (!needsFoes || foes >= 2 || this.targetWait > 8) {
+            if (this.pickFriend() >= 0 || this.targetWait > 3) {
                 this.targetWait = 0;
                 this.cameoCd = rnd(CAMEO_EVERY[0], CAMEO_EVERY[1]);
                 this.friendCameo();
@@ -1178,7 +1189,7 @@ export class Game extends Scene {
         const x0 = p.x + 20;
         const y0 = p.y - 70;
         const G = 900;
-        b.on = true; b.x = x0; b.y = y0; b.big = p.bigBomb; p.bigBomb = false; b.tx = tx;
+        b.on = true; b.x = x0; b.y = y0; b.big = p.bigBomb || p.infBomb > 0; p.bigBomb = false; b.tx = tx; // Deniz's slap makes every bomb a big one
         b.vx = (tx - x0) / T;
         b.vy = (GROUND_Y - y0 - 0.5 * G * T * T) / T;
         b.s.setVisible(true).setTexture(b.big ? 'pr_buyuk_bomba' : 'pr_el_bombasi').setPosition(x0, y0).setScale(b.big ? 1.2 : 1);
@@ -1482,6 +1493,22 @@ export class Game extends Scene {
         this.hackG = this.add.graphics().setDepth(60);
     }
 
+    private buildFriendFx() {
+        this.slept.clear(); this.sleepLen.clear(); this.dreamWord.clear();
+        this.sleepFade = 0; this.sleepWarned = false;
+        this.sleepDim = this.add.rectangle(W / 2, H / 2, W + 8, H + 8, 0x0a1a5c, 0).setDepth(11).setVisible(false);
+        this.shieldG = this.add.graphics().setDepth(26);
+        this.dreams = [];
+        for (let i = 0; i < 8; i++) {
+            const cloud = this.add.graphics();
+            cloud.fillStyle(COLORS.ink, 1).fillEllipse(0, 0, 70, 32).fillCircle(-16, -11, 11).fillCircle(5, -15, 13).fillCircle(20, -10, 10).fillCircle(-26, 22, 5).fillCircle(-32, 30, 3.5);
+            cloud.fillStyle(0xffffff, 0.95).fillEllipse(0, 0, 64, 26).fillCircle(-16, -11, 8.5).fillCircle(5, -15, 10.5).fillCircle(20, -10, 7.5).fillCircle(-26, 22, 3).fillCircle(-32, 30, 2);
+            const t = this.add.text(0, -2, '', { fontFamily: FONT, fontSize: '11px', color: '#1b0f12', resolution: K }).setOrigin(0.5);
+            const c = this.add.container(0, 0, [cloud, t]).setDepth(44).setVisible(false);
+            this.dreams.push({ c, t });
+        }
+    }
+
     /**
      * While hack mode runs (HACK_MODE seconds) every ordinary soldier that steps into view is glitched and erased, a beam from
      * the friend banner marks each one. Bigger things (bosses, cameo enemies, fliers) cannot be deleted outright: they flicker green and
@@ -1644,13 +1671,13 @@ export class Game extends Scene {
             return true;
         }
         e.stun -= dt;
-        const elapsed = STUN_TIME - e.stun;
+        const elapsed = (this.sleepLen.get(e) ?? STUN_TIME) - e.stun;
         const frame = e.stun < 0.6 ? Math.floor(15 * (Math.max(0, e.stun) / 0.6)) : Math.min(15, Math.floor(elapsed * 18));
         e.s.setTexture(`${e.kind}_death`, frame).setPosition(e.x, e.y).setTint(0xb8e8ff).setTintMode(Phaser.TintModes.MULTIPLY);
         e.sh.setPosition(e.x, GROUND_Y + 1).setVisible(true);
         // a steady trickle of z / Z / Z drifting up from the head, growing as it rises
-        const zn = Math.floor(e.t / 0.42);
-        if (zn !== Math.floor((e.t - dt) / 0.42)) {
+        const zn = Math.floor(e.t / 0.3);
+        if (zn !== Math.floor((e.t - dt) / 0.3)) {
             const k = zn % 3;
             this.fx.text(e.x + 8 + k * 7, e.y - d.h * 0.8, k === 0 ? 'z' : 'Z', '#cfeeff', [11, 14, 18][k]);
         }
@@ -2124,10 +2151,33 @@ export class Game extends Scene {
         }
     }
 
-    /** A Pompa-team friend crashes into the game, shouts their catchphrase and helps out. */
-    private friendCameo() {
+    /** Would this friend's power be worth anything right now? An empty road wastes a strike, full tea wastes a heal. */
+    private friendReady(f: Friend) {
+        switch (f.power) {
+            case 'heal': case 'airdrop':
+                return this.p.hp < MAX_HP;
+            default: // everything else needs somebody to act on
+                return this.enemies.some((e) => e.on && e.alive && e.x > 20 && e.x < W - 20);
+        }
+    }
+
+    /** The next friend in the rotation whose power helps right now, or -1 when none does. */
+    private pickFriend() {
+        const n = FRIENDS.length;
+        for (let i = 0; i < n; i++) {
+            const k = (this.friendIdx + i) % n;
+            if (this.friendReady(FRIENDS[k])) return k;
+        }
+        return -1;
+    }
+
+    /** A Pompa-team friend crashes into the game, shouts their catchphrase and helps out. `id` forces a particular friend. */
+    private friendCameo(id?: string) {
         if (!FRIENDS.length) return;
-        const f = FRIENDS[this.friendIdx++ % FRIENDS.length];
+        let k = id ? FRIENDS.findIndex((x) => x.id === id) : this.pickFriend();
+        if (k < 0) k = this.friendIdx % FRIENDS.length; // nobody is useful right now: the rotation goes on
+        this.friendIdx = k + 1;
+        const f = FRIENDS[k];
         const p = this.p;
         // whichever way a friend arrived, the next automatic one waits a while
         this.cameoCd = Math.max(this.cameoCd, 10);
@@ -2157,6 +2207,7 @@ export class Game extends Scene {
                 break;
             case 'shield':
                 p.shield = 10;
+                Sound.play('shield');
                 break;
             case 'rapid':
                 p.rapid = 10;
@@ -2166,35 +2217,33 @@ export class Game extends Scene {
                 p.bombProg = 0;
                 p.bigBomb = true;
                 break;
-            case 'heal':
-                // Tuğçe corrects Memduh's spelling; he learns a little and feels better
+            case 'heal': {
+                // Tuğçe corrects Memduh's spelling; he learns a little and feels better: the glasses of tea fly up into the counter
+                const old = p.hp;
                 p.hp = Math.min(MAX_HP, p.hp + 2);
-                this.hud.setHp(p.hp);
-                this.hud.pulseHp(Math.max(0, p.hp - 2));
+                this.healFly(old, p.hp - old);
                 this.dlg.say('friendLesson', { priority: 'normal' });
                 break;
-            case 'anesthesia': {
-                // Melike puts every ordinary enemy on screen to sleep; bosses and flyers shrug it off
+            }
+            case 'anesthesia':
+                // Melike puts the screen to sleep for a few seconds: everything on the ground that is in view, or walks into view, nods off
+                // (see updateFriendFx); bosses and flyers shrug it off
                 this.sleepT = STUN_TIME;
-                let resisted = false;
-                for (const e of this.enemies) {
-                    if (!e.on || !e.alive || e.x > W + 30 || e.x < -40) continue;
-                    if (isBoss(e) || e.def.flies) { resisted = true; continue; }
-                    if (e.st === 'drop') continue; // still under the canopy: nothing on the ground to put to sleep
-                    e.stun = STUN_TIME;
-                    this.fx.ring(e.x, e.y - 40, 0x9fe3ff, 2, 0.4);
-                }
-                if (resisted) this.hud.showStatus('BOSSLAR UYUMADI!', '#ff9a7a');
+                this.sleepWarned = false;
+                this.slept.clear();
+                this.fx.flash(0x6aa8ff, 0.3, 360);
+                this.hud.showStatus('UYKU ZAMANI!', '#9fe3ff');
+                Sound.play('sleep');
                 this.clearEnemyShots();
                 this.dlg.say('friendAnesthesia', { priority: 'normal' });
                 break;
-            }
             case 'hack':
                 // Tunç takes over the screen for HACK_MODE seconds (see updateHack): whatever is in view, or walks into view, is attacked
                 this.hackT = HACK_MODE;
                 this.hackClock = 0;
                 this.fx.flash(0x39ff6a, 0.35, 320);
                 this.hud.showStatus('HACK MODU: GÖRDÜĞÜ SİLİNİR!', '#39ff6a');
+                Sound.play('hack');
                 this.clearEnemyShots();
                 this.dlg.say('friendHack', { priority: 'normal' });
                 break;
@@ -2209,11 +2258,137 @@ export class Game extends Scene {
                 p.rapid = 10;
                 p.infBomb = 10;
                 p.bombs = 3;
-                p.hurtT = HURT_DUR; // he plays the ouch animation for fun, without losing any tea
-                this.fx.text(p.x + 6, p.y - 90, 'ŞAP ŞAP!', '#ffb066', 16);
-                this.fx.sparks(p.x, p.y - 40, 12, 0xff7a21, 220);
+                this.slapHand(0.45);
+                this.slapHand(0.95);
                 this.dlg.say('friendSlap', { priority: 'normal' });
                 break;
+        }
+    }
+
+    /** Tuğçe's gift: one glass of tea per life, flying from Memduh up to the counter and filling its slot when it lands. */
+    private healFly(old: number, gain: number) {
+        const p = this.p;
+        Sound.play('heal');
+        this.fx.ring(p.x, p.y - 50, 0x7dff9a, 4, 0.6);
+        this.fx.flash(0x7dff9a, 0.16, 300);
+        if (gain <= 0) {
+            this.fx.text(p.x, p.y - 100, 'ÇAYLAR ZATEN DOLU!', '#9fe3ff', 14);
+            return;
+        }
+        for (let i = 0; i < 3; i++) this.fx.text(p.x + rnd(-30, 30), p.y - 60 - i * 14, '+', '#7dff9a', 20);
+        for (let k = 0; k < gain; k++) {
+            this.time.delayedCall(180 + k * 320, () => {
+                if (this.over) return;
+                const slot = old + k;
+                const gx = 23 + slot * 25;
+                const glass = this.add.image(p.x, p.y - 70, 'tea').setScale(2.6).setDepth(96);
+                this.tweens.add({
+                    targets: glass, x: gx, y: 24, scale: 2, duration: 560, ease: 'Cubic.in',
+                    onUpdate: () => this.fx.sparks(glass.x, glass.y, 1, 0x7dff9a, 60),
+                    onComplete: () => {
+                        glass.destroy();
+                        this.hud.setHp(Math.min(this.p.hp, slot + 1));
+                        this.hud.pulseHp(slot);
+                        this.fx.ring(gx, 24, 0x7dff9a, 2.6, 0.45);
+                        this.fx.sparks(gx, 24, 12, 0xffe36b, 150);
+                        this.fx.text(gx, 56, '+1 ÇAY', '#7dff9a', 14);
+                        Sound.play('pickup');
+                    },
+                });
+            });
+        }
+    }
+
+    /** Deniz's motivation slap: a big hand swings in from behind and smacks Memduh between the shoulder blades. */
+    private slapHand(delaySec: number) {
+        const p = this.p;
+        const hand = this.add.graphics().setDepth(96).setVisible(false);
+        const SKIN = 0xf4b98a;
+        hand.fillStyle(COLORS.ink, 1).fillRoundedRect(-17, -13, 34, 30, 8);
+        for (let i = 0; i < 4; i++) hand.fillRoundedRect(-17 + i * 9, -38 - (i === 1 || i === 2 ? 4 : 0), 9, 30, 4.5);
+        hand.fillRoundedRect(12, -4, 20, 12, 6);
+        hand.fillStyle(SKIN, 1).fillRoundedRect(-14, -10, 28, 24, 6);
+        for (let i = 0; i < 4; i++) hand.fillRoundedRect(-14 + i * 9, -35 - (i === 1 || i === 2 ? 4 : 0), 7, 28, 3.5);
+        hand.fillRoundedRect(14, -1, 15, 7, 3.5);
+        hand.fillStyle(0xd88f5f, 1).fillRect(-12, 6, 24, 3);
+        this.time.delayedCall(delaySec * 1000, () => {
+            if (this.over) return;
+            const hx = p.x - 20, hy = p.y - 58;
+            hand.setVisible(true).setPosition(hx - 120, hy + 28).setRotation(-1.2).setScale(1.2);
+            this.tweens.add({
+                targets: hand, x: hx, y: hy, rotation: 0.15, duration: 170, ease: 'Cubic.in',
+                onComplete: () => {
+                    // the smack: impact star, comic word, shake, a freeze-frame and Memduh lurches forward with his ouch pose
+                    Sound.play('slap', 1 + rnd(-0.08, 0.08));
+                    this.fx.shake(0.55);
+                    this.fx.stop(80);
+                    p.hurtT = HURT_DUR; // he plays the ouch animation, without losing any tea
+                    p.recoil = -9;
+                    const star = this.add.graphics().setDepth(97).setPosition(hx + 14, hy);
+                    star.fillStyle(0xffe36b, 1).lineStyle(3, COLORS.ink, 1).beginPath();
+                    for (let i = 0; i < 16; i++) {
+                        const r = i % 2 ? 16 : 34;
+                        const a = (i / 16) * Math.PI * 2;
+                        star.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                    }
+                    star.closePath().fillPath().strokePath().setScale(0.4);
+                    this.tweens.add({ targets: star, scale: 1.3, alpha: 0, duration: 380, ease: 'Cubic.out', onComplete: () => star.destroy() });
+                    this.fx.text(hx - 4, hy - 36, 'ŞAP!', '#ffd23c', 22);
+                    this.fx.sparks(hx + 10, hy, 12, 0xff7a21, 230);
+                    this.fx.ring(hx + 10, hy, 0xffffff, 3, 0.25);
+                    this.tweens.add({ targets: hand, x: hx - 70, y: hy + 16, rotation: -0.8, alpha: 0, delay: 140, duration: 240, ease: 'Quad.out', onComplete: () => hand.destroy() });
+                },
+            });
+        });
+    }
+
+    /** Melike's sleep and the shield bubble: a blue night over the screen, sleepers dream, latecomers nod off too. */
+    private updateFriendFx(dt: number) {
+        const p = this.p;
+        // incoming soldiers fall asleep too, for a shorter nap
+        const sleeping = this.sleepT > 0;
+        if (sleeping) {
+            for (const e of this.enemies) {
+                if (!e.on || !e.alive || e.x > W - 8 || e.x < -20 || e.stun > 0 || e.hack > 0 || this.slept.has(e)) continue;
+                if (isBoss(e) || e.def.flies) {
+                    if (!this.sleepWarned) { this.sleepWarned = true; this.hud.showStatus('BOSS VE UÇANLAR UYUMADI!', '#ff9a7a'); }
+                    continue;
+                }
+                if (e.st === 'drop') continue; // still under the canopy: nothing on the ground to put to sleep
+                this.slept.add(e);
+                const len = Math.max(2.4, this.sleepT + 1);
+                this.sleepLen.set(e, len);
+                this.dreamWord.set(e, DREAMS[Math.floor(Math.random() * DREAMS.length)]);
+                e.stun = len;
+                this.fx.ring(e.x, e.y - 40, 0x9fe3ff, 2.4, 0.45);
+                this.fx.sparks(e.x, e.y - 50, 5, 0x9fe3ff, 90);
+            }
+        } else if (this.slept.size) this.slept.clear();
+        this.sleepFade += ((sleeping ? 1 : 0) - this.sleepFade) * Math.min(1, dt * 5);
+        if (this.sleepFade < 0.01) this.sleepFade = 0;
+        this.sleepDim.setVisible(this.sleepFade > 0).setFillStyle(0x0a1a5c, 0.34 * this.sleepFade);
+        // a thought cloud over each sleeper with what they are dreaming of
+        let n = 0;
+        for (const e of this.enemies) {
+            if (n >= this.dreams.length) break;
+            if (!e.on || !e.alive || e.stun <= 0 || e.hack > 0 || e.x < 10 || e.x > W - 10) continue;
+            const d = this.dreams[n++];
+            const top = e.def.head ?? e.def.h + 24;
+            d.t.setText(this.dreamWord.get(e) ?? 'ZZZ');
+            d.c.setPosition(e.x + 6, e.y - top - 40 + Math.sin(this.time.now / 380 + e.t) * 3).setVisible(true).setAlpha(Math.min(1, e.stun * 2));
+        }
+        for (; n < this.dreams.length; n++) this.dreams[n].c.setVisible(false);
+
+        // the shield: a soft bubble around Memduh that starts to blink when it is about to run out
+        const g = this.shieldG.clear();
+        if (p.shield > 0 && !p.dead) {
+            const blink = p.shield < 2 && Math.floor(this.time.now / 100) % 2 === 0;
+            if (!blink) {
+                const cx = p.x - 4, cy = p.y - 50, r = 44 + Math.sin(this.time.now / 220) * 1.5;
+                g.fillStyle(0x9fe3ff, 0.16).fillCircle(cx, cy, r);
+                g.lineStyle(3, 0xcff3ff, 0.9).strokeCircle(cx, cy, r);
+                g.lineStyle(3, 0xffffff, 0.7).beginPath().arc(cx, cy, r - 6, -2.6, -1.8).strokePath();
+            }
         }
     }
 
