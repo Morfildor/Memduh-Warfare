@@ -182,11 +182,11 @@ export class Fx {
             b.t = 0;
             b.s.setPosition(x, y).setScale(scale).setVisible(true).setFrame(0).setFlipX(Math.random() < 0.5);
         }
-        this.sparks(x, y, big ? 26 : 14, 0xffe08a, big ? 340 : 240);
-        this.sparks(x, y, big ? 14 : 7, 0xff7a21, big ? 260 : 180);
-        this.debris(x, y + 6, big ? 16 : 9);
-        this.smoke(x, y - 6, big ? 8 : 4);
-        this.ring(x, y, 0xffd86b, big ? 6 : 3.2, big ? 0.55 : 0.35);
+        this.sparks(x, y, big ? 14 : 7, 0xffe08a, big ? 340 : 240);
+        this.sparks(x, y, big ? 8 : 4, 0xff7a21, big ? 260 : 180);
+        this.debris(x, y + 6, big ? 9 : 5);
+        this.smoke(x, y - 6, big ? 6 : 3);
+        this.ring(x, y, 0xffd86b, big ? 5 : 2.4, big ? 0.55 : 0.35);
         this.shake(big ? 0.8 : 0.45);
     }
 

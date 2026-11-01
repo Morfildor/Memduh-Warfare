@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { TYPE, W } from '../constants';
+import { GROUND_Y, TYPE, W } from '../constants';
 import { label } from './util';
 
 /** All in-run readouts. Lives inside the shared UI container so screen shake never moves it. */
@@ -19,6 +19,7 @@ export class Hud {
     private shownScore = 0;
     private t = 0;
     private statusT = 0;
+    private bannerT = 0;
     pauseBtn: Phaser.GameObjects.Container;
 
     constructor(private scene: Phaser.Scene, ui: Phaser.GameObjects.Container, maxHp: number) {
@@ -45,7 +46,8 @@ export class Hud {
         this.bossBar = scene.add.graphics();
         this.bossName = label(scene, W / 2, 101, '', { size: TYPE.small, color: '#ffc0b0', strokeW: 4 }).setVisible(false);
         ui.add([this.bossBar, this.bossName]);
-        this.status = label(scene, W / 2, 392, '', { size: TYPE.lead, color: '#ffffff', strokeW: 5 }).setAlpha(0);
+        // on the empty sand under the road: the balloons, the fliers and the fight all live above it
+        this.status = label(scene, W / 2, GROUND_Y + 28, '', { size: TYPE.lead, color: '#ffffff', strokeW: 5 }).setAlpha(0);
         ui.add(this.status);
 
         // pause button
@@ -105,6 +107,12 @@ export class Hud {
         this.scene.tweens.add({ targets: this.banner, alpha: 1, scale: 1, duration: 260, ease: 'Back.out', yoyo: false });
         this.scene.tweens.add({ targets: this.bannerSub, alpha: 1, duration: 300, delay: 180 });
         this.scene.tweens.add({ targets: [this.banner, this.bannerSub], alpha: 0, duration: 400, delay: 1900 });
+        this.bannerT = 2.3;
+    }
+
+    /** A title is on screen; balloons wait for it instead of landing underneath it. */
+    get bannerUp() {
+        return this.bannerT > 0;
     }
 
     showStatus(text: string, color = '#ffffff') {
@@ -119,6 +127,7 @@ export class Hud {
 
     update(dt: number, score: number, combo: number, mult: number, comboT: number, pompa: number, pompaOn: boolean, boss: number | null) {
         this.t += dt;
+        this.bannerT = Math.max(0, this.bannerT - dt);
         this.shownScore += (score - this.shownScore) * Math.min(1, dt * 10);
         if (Math.abs(score - this.shownScore) < 1) this.shownScore = score;
         this.score.setText(String(Math.round(this.shownScore)));

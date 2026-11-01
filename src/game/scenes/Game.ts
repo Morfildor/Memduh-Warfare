@@ -276,6 +276,8 @@ export class Game extends Scene {
     // comic speech bubble for the enemies who announce themselves
     private bubble!: ComicBubble;
     private bubbleE: Enemy | null = null;
+    private bubbleQ: { e: Enemy; kind: EnemyKind; name: string; text: string; x: number; y: number }[] = [];
+    private shotCount = 0;
 
     constructor() {
         super('Game');
@@ -323,7 +325,7 @@ export class Game extends Scene {
         this.hud = new Hud(this, this.ui, MAX_HP);
         this.dlg = new DialogueBox(this, 112);
         this.ui.add(this.dlg.layer);
-        this.cameo = new FriendCameo(this, this.ui, 184);
+        this.cameo = new FriendCameo(this, this.ui, 112);
         this.friendIdx = Math.floor(Math.random() * Math.max(1, FRIENDS.length));
         this.hintT = 0;
         this.hintStep = Save.seenTutorial ? HINTS.length : 0;
@@ -370,6 +372,7 @@ export class Game extends Scene {
         this.planeOn = false;
         this.bubble = new ComicBubble(this);
         this.bubbleE = null;
+        this.bubbleQ = [];
         this.plane = this.add.image(0, 0, 'plane').setScale(1.8).setVisible(false).setDepth(26);
         this.patsoChute = this.add.image(0, 0, 'chute').setOrigin(0.5, 1).setScale(2).setVisible(false).setDepth(29);
         this.camelShadow = this.add.image(0, 0, 'shadow').setScale(9, 2.4).setVisible(false).setDepth(9);
@@ -476,7 +479,7 @@ export class Game extends Scene {
         e.tag.setText(def.name).setVisible(false);
         e.said = false;
         e.s.setTexture(walkSheet(kind), 0).setVisible(true).setScale(def.scale).setAlpha(1).setRotation(0).clearTint().setFlipX(true);
-        e.s.setTintMode(Phaser.TintModes.MULTIPLY);
+        e.s.setTintMode(Phaser.TintModes.MULTIPLY).setDepth(CAMEO_ENEMIES.includes(kind) ? 23 : 20); // a cameo stands in front of any soldiers around him
         e.sh.setVisible(!def.flies).setScale(def.w / 12, 2);
         e.s.setPosition(x, e.y);
         if (kind === 'heli') {
@@ -560,6 +563,7 @@ export class Game extends Scene {
             if (!e.on || !e.alive || isBoss(e)) continue;
             if (e.x >= W + 4) this.removeEnemy(e);
             else n++;
+            if (e.kind === 'heli') e.life = Math.min(e.life, 0); // a parked helicopter would hover right beside the balloon: send it home
         }
         if (n > 0 && this.cameoWaitT < 8) return;
         this.cameoWait = false;
@@ -730,11 +734,15 @@ export class Game extends Scene {
 
         // The Pompa team does not wait to be found: a friend crashes in by themselves every half minute or so
         // (the friend pickups in drops are still there on top of this).
+        // One spotlight at a time: it waits while a title, a balloon, a cameo entrance or a boss entrance is on screen.
+        const spotlight = this.hud.bannerUp || this.bubble.active || this.bubbleQ.length > 0 || this.cameoWait || (!!this.cameoE && this.cameoE.stT < 4) || (!!this.boss && this.boss.alive && this.boss.stT < 4);
         this.cameoCd -= dt;
-        if (this.cameoCd <= 0 && !p.dead && this.stageClearT < 0) {
+        if (this.cameoCd <= 0 && !p.dead && this.stageClearT < 0 && !spotlight) {
             this.cameoCd = rnd(CAMEO_EVERY[0], CAMEO_EVERY[1]);
             this.friendCameo();
         }
+        // Chatter yields the same way: the top strip never shows a line while a balloon or a title owns the scene
+        if (this.bubble.active || this.bubbleQ.length > 0 || this.hud.bannerUp) this.dlg.hold(0.25);
 
         // Cameo enemies (Motor Ahmet, Rehber Hoca, whoever the user adds) wander in on their own clock, in any stage, as a mini-boss
         // moment: the director stops sending soldiers, the road empties, and only then does the cameo make his entrance
@@ -1088,7 +1096,7 @@ export class Game extends Scene {
         b.ang = ang;
         b.s.setVisible(true).setRotation(ang).setPosition(mx, my).setTint(big ? 0xffe36b : 0xffffff).setScale(big ? 3.2 : 2.4, big ? 2.6 : 2);
         b.trail.setVisible(true).setRotation(ang).setPosition(mx, my).setTint(big ? 0xffc23c : 0xff9a28).setScale(big ? 5.2 : 4, big ? 2.2 : 1.6);
-        this.fx.casing(mx - 22, my + 2);
+        if (++this.shotCount % 3 === 0) this.fx.casing(mx - 22, my + 2);
         p.recoil = 3;
         // muzzle flash
         const f = this.flashes.find((q) => q.t <= 0);
@@ -1096,7 +1104,6 @@ export class Game extends Scene {
             f.t = 0.05;
             f.s.setVisible(true).setPosition(mx + Math.cos(ang) * 12, my + Math.sin(ang) * 12).setRotation(ang).setScale(0.85 + Math.random() * 0.3);
         }
-        this.fx.sparks(mx, my, 1, 0xffe08a, 120);
         Sound.play('shoot', 1 + rnd(-0.1, 0.1));
     }
 
@@ -1430,10 +1437,9 @@ export class Game extends Scene {
         return e.y - (e.def.head ?? e.def.h + 24);
     }
 
+    /** Queued, not shown: one speaker at a time, so a second enemy arriving can never cut the first one's joke short. */
     private sayBubble(e: Enemy, text: string) {
-        this.bubbleE = e;
-        this.bubble.say(e.def.name, text, e.x, this.bubbleY(e));
-        Sound.play('ui');
+        if (this.bubbleQ.length < 2) this.bubbleQ.push({ e, kind: e.kind, name: e.def.name, text, x: e.x, y: this.bubbleY(e) });
     }
 
     private updateBubble(dt: number) {
@@ -1441,7 +1447,15 @@ export class Game extends Scene {
         if (e && (!e.on || !e.alive)) this.bubbleE = null; // the line finishes even if the speaker does not
         if (this.bubbleE) this.bubble.update(dt, e!.x, this.bubbleY(e!));
         else this.bubble.update(dt);
-        if (!this.bubble.active) this.bubbleE = null;
+        if (this.bubble.active) return;
+        this.bubbleE = null;
+        if (!this.bubbleQ.length || this.hud.bannerUp) return;
+        // a speaker killed while waiting still gets their line, where they fell (the pooled slot may already be someone else)
+        const q = this.bubbleQ.shift()!;
+        const alive = q.e.on && q.e.alive && q.e.kind === q.kind;
+        if (alive) this.bubbleE = q.e;
+        this.bubble.say(q.name, q.text, alive ? q.e.x : q.x, alive ? this.bubbleY(q.e) : q.y);
+        Sound.play('ui');
     }
 
     /** Soldiers get small, quiet type. A cameo character's name is the joke, so it goes on a gold plate. */
@@ -1472,13 +1486,18 @@ export class Game extends Scene {
 
     /**
      * A soldier name that would sit on top of another visible name this frame is hidden, so a group of soldiers does not make a
-     * smear of text. Cameo plates and boss names are never hidden (and are what the soldiers give way to).
+     * smear of text. Cameo plates and boss names are never hidden (and are what the soldiers give way to). While someone is
+     * talking every soldier name goes quiet, so the balloon is the only thing to read.
      */
     private declutterTags() {
         const list = this.enemies;
         for (const a of list) {
             if (!a.on || !a.tag.visible || isBoss(a) || CAMEO_ENEMIES.includes(a.kind)) continue;
             const ta = a.tag;
+            if (this.bubble.active) {
+                ta.setVisible(false);
+                continue;
+            }
             for (const b of list) {
                 if (b === a || !b.on || !b.tag.visible) continue;
                 const tb = b.tag;
@@ -2004,7 +2023,7 @@ export class Game extends Scene {
         const p = this.p;
         // whichever way a friend arrived, the next automatic one waits a while
         this.cameoCd = Math.max(this.cameoCd, 10);
-        this.cameo.show(f, '');
+        this.dlg.hold(this.cameo.show(f, '')); // the strip is the friend's for as long as the banner is up
         Sound.play('pompaReady', 0.6);
         this.fx.flash(0xffe36b, 0.25, 260);
         this.fx.shake(0.25);
@@ -2135,7 +2154,7 @@ export class Game extends Scene {
         e.flash = 0.07;
         if (src === 'bullet') {
             if (!isBoss(e)) e.kb += 14; // bosses hold their ground
-            this.fx.sparks(x, y, isBoss(e) && !e.open ? 3 : 5, e.def.armor < 1 ? 0xcfd8e0 : 0xffd86b, 140, 1);
+            this.fx.sparks(x, y, 2, e.def.armor < 1 ? 0xcfd8e0 : 0xffd86b, 140, 1);
             this.fx.ring(x, y, 0xffe08a, 0.9, 0.14);
             Sound.play('hit', e.def.armor < 1 ? 0.7 : 1);
         }
@@ -2160,9 +2179,9 @@ export class Game extends Scene {
         this.combo++;
         this.comboT = 4;
         this.bestCombo = Math.max(this.bestCombo, this.combo);
-        // killed before they got to say their line (a friend's power, a bomb): the joke is still told, unless another speaker is mid-line
+        // killed before they got to say their line (a friend's power, a bomb): the joke is still told
         const q = ENEMY_QUOTES[e.kind];
-        if (q && !e.said && e.x > 14 && e.x < W - 14 && !(this.bubble.active && this.bubbleE)) {
+        if (q && !e.said && e.x > 14 && e.x < W - 14) {
             e.said = true;
             this.sayBubble(e, q[Math.floor(Math.random() * q.length)]);
         }
@@ -2207,11 +2226,10 @@ export class Game extends Scene {
                 e.vy = -120;
             } else {
                 // soldiers do their own comic death animation; just add the poof and a funny shout
-                this.fx.dust(e.x, GROUND_Y, 8, 0);
-                this.fx.sparks(e.x, e.y - e.def.h * 0.5, 8, 0xffe08a, 200);
+                this.fx.dust(e.x, GROUND_Y, 4, 0);
                 this.fx.explosion(e.x + 8, e.y - e.def.h * 0.55, 0.9);
                 e.vx = 70 + e.kb * 0.3;
-                if (Math.random() < 0.4) this.fx.text(e.x, e.y - e.def.h - 22, SHOUTS[Math.floor(Math.random() * SHOUTS.length)], '#ffd23c', 16);
+                if (Math.random() < 0.2) this.fx.text(e.x, e.y - e.def.h - 22, SHOUTS[Math.floor(Math.random() * SHOUTS.length)], '#ffd23c', 16);
             }
             if (Math.random() < 0.05 + (e.kind === 'armor' || e.kind === 'heavy' || e.kind === 'teacher' || e.kind === 'chem' || e.kind === 'dinho' || e.kind === 'trucker' ? 0.09 : 0)) this.spawnPickup(this.randomPickup(), e.x, GROUND_Y - 40);
         }

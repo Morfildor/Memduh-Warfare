@@ -5,7 +5,8 @@ const INK = COLORS.ink;
 const PAPER = 0xfffdf2;
 const TAIL = 24; // how far the tail reaches below the balloon
 const EDGE = 8; // the balloon never gets closer than this to the screen sides
-const WRAP = 214;
+const WRAP = 270; // wide and short: a tall balloon climbs into the fliers and the titles
+const DEPTH = 90; // the line is the joke, so it sits above every explosion, spark and floating score (Fx tops out at 80)
 
 /**
  * The comic-book balloon cameo enemies speak in: ink outline, hard offset shadow, halftone corner, a name caption and a
@@ -29,7 +30,7 @@ export class ComicBubble {
         this.plate = scene.add.graphics();
         this.line = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '15px', color: '#1b0f12', align: 'center', lineSpacing: 5, resolution: K, wordWrap: { width: WRAP } }).setOrigin(0.5, 0.5);
         this.name = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '16px', color: '#1b0f12', resolution: K }).setOrigin(0, 0.5);
-        this.root = scene.add.container(0, 0, [this.body, this.tail, this.line, this.plate, this.name]).setDepth(41).setVisible(false);
+        this.root = scene.add.container(0, 0, [this.body, this.tail, this.line, this.plate, this.name]).setDepth(DEPTH).setVisible(false);
     }
 
     /** `x, y` is the spot on the speaker the tail points at; the longer the line, the longer it stays. */

@@ -14,9 +14,9 @@ const TEXT_X = PAD + PORTRAIT_W + 12;
 const TEXT_W = BOX_W - TEXT_X - 14;
 
 /**
- * A friend's cameo: the joke of the game, so it gets room. A banner stacked under the dialogue strip: purple with a gold double
- * outline, a slowly turning starburst behind a big portrait, the name in gold, the catchphrase in large cream type with a dark
- * outline, and a ribbon naming what the friend does.
+ * A friend's cameo: the joke of the game, so it gets room. A banner that takes over the dialogue strip's spot: purple with a gold
+ * double outline, a slowly turning starburst behind a big portrait, the name in gold, the catchphrase in large cream type with a
+ * dark outline, and a ribbon naming what the friend does.
  */
 export class FriendCameo {
     private root: Phaser.GameObjects.Container;
@@ -105,6 +105,7 @@ export class FriendCameo {
         this.power.setPosition(rx + 34, ry);
     }
 
+    /** Returns how many seconds the banner stays up. */
     show(friend: Friend, power: string) {
         const key = this.scene.textures.exists(`friend_${friend.id}`) ? `friend_${friend.id}` : 'friend_unknown';
         this.portrait.setTexture(key);
@@ -138,5 +139,6 @@ export class FriendCameo {
             targets: this.root, y: this.y - 30, alpha: 0, duration: 300, delay: 320 + hold, ease: 'Cubic.in',
             onComplete: () => this.root.setVisible(false),
         });
+        return (320 + hold + 300) / 1000;
     }
 }

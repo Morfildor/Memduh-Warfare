@@ -30,6 +30,7 @@ export class DialogueBox {
     private recent: string[] = [];
     private shownY: number;
     private visible = false;
+    private hush = 0;
 
     constructor(scene: Phaser.Scene, y: number) {
         this.shownY = y;
@@ -62,7 +63,7 @@ export class DialogueBox {
         const last = this.lastSaid.get(topic);
         if (last !== undefined && this.clock - last < cd) return false;
         const pri = opts.priority ?? 'normal';
-        const busy = !!this.current;
+        const busy = !!this.current || this.hush > 0;
         if (busy && pri === 'low') return false;
         if (this.queue.length >= 2 && pri !== 'high') return false;
 
@@ -87,6 +88,11 @@ export class DialogueBox {
         return topic + ':' + e[0].text;
     }
 
+    /** Step aside for `seconds` (a friend's cameo uses this strip): the box fades out and whatever it was saying waits. */
+    hold(seconds: number) {
+        this.hush = seconds;
+    }
+
     /** Clear everything (new run). */
     reset() {
         this.queue = [];
@@ -94,13 +100,16 @@ export class DialogueBox {
         this.recent = [];
         this.lastSaid.clear();
         this.clock = 0;
+        this.hush = 0;
         this.root.setAlpha(0);
         this.visible = false;
     }
 
     update(dt: number) {
         this.clock += dt;
-        if (this.current) {
+        if (this.hush > 0) {
+            this.hush -= dt;
+        } else if (this.current) {
             this.lineAge += dt;
             const chars = Math.min(this.lineLen, Math.floor(this.lineAge * 48));
             const line = this.current[this.lineIdx];
@@ -125,7 +134,7 @@ export class DialogueBox {
                 this.showLine();
             }
         }
-        const target = this.current ? 1 : 0;
+        const target = this.current && this.hush <= 0 ? 1 : 0;
         if (target === 1 && !this.visible) this.visible = true;
         const a = this.root.alpha + (target - this.root.alpha) * Math.min(1, dt * 12);
         this.root.setAlpha(a < 0.01 ? 0 : a);
