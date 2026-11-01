@@ -325,7 +325,9 @@ export class Game extends Scene {
         this.friendIdx = Math.floor(Math.random() * Math.max(1, FRIENDS.length));
         this.hintT = 0;
         this.hintStep = Save.seenTutorial ? HINTS.length : 0;
-        this.hud.pauseBtn.setInteractive(new Phaser.Geom.Rectangle(0, 0, 40, 40), Phaser.Geom.Rectangle.Contains);
+        // Phaser hit-tests a container's children with the CHILD's scroll factor, so anything clickable inside a scrollFactor-0
+        // container (this HUD, the pause screen, the win panel) needs its own scrollFactor 0 or its hit area sits a camera-scroll away
+        this.hud.pauseBtn.setScrollFactor(0).setInteractive(new Phaser.Geom.Rectangle(0, 0, 40, 40), Phaser.Geom.Rectangle.Contains);
         this.hud.pauseBtn.on('pointerdown', () => this.setPaused(true));
 
         this.director = new Director(this.spawner());
@@ -2235,7 +2237,7 @@ export class Game extends Scene {
         Sound.play('win');
         const newBest = this.score > Save.best;
         const c = this.add.container((K - 1) * W / 2, (K - 1) * H / 2).setScrollFactor(0).setDepth(2000).setAlpha(0);
-        c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x1b0f12, 0.6).setInteractive());
+        c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x1b0f12, 0.6).setScrollFactor(0).setInteractive());
         const panel = this.add.graphics();
         panel.fillStyle(0x2a1710, 0.95).fillRoundedRect(30, H / 2 - 150, W - 60, 190, 12);
         panel.lineStyle(3, 0xffc23c, 1).strokeRoundedRect(30, H / 2 - 150, W - 60, 190, 12);
@@ -2250,11 +2252,11 @@ export class Game extends Scene {
         c.add(label(this, W / 2, H / 2 - 56, newBest ? 'YENİ REKOR!' : `Rekor: ${Save.best}`, { size: newBest ? 18 : 13, color: newBest ? '#ff7a21' : '#ffe0a0' }));
         c.add(label(this, W / 2, H / 2 - 20, `${this.kills} düşman   •   en iyi kombo ${this.bestCombo}`, { size: 10, color: '#d9b98a', strokeW: 2 }));
         c.add(label(this, W / 2, H / 2 + 8, 'Çay hâlâ sıcak. Çöl hâlâ orada.', { size: 10, color: '#d9b98a', strokeW: 2 }));
-        c.add(menuButton(this, W / 2, H / 2 + 86, 230, 52, 'SONSUZ ÇÖL', () => this.continueEndless(), 0xff7a21).root);
+        c.add(menuButton(this, W / 2, H / 2 + 86, 230, 52, 'SONSUZ ÇÖL', () => this.continueEndless(), 0xff7a21).root.setScrollFactor(0));
         c.add(menuButton(this, W / 2, H / 2 + 148, 230, 40, 'ANA MENÜ', () => {
             Save.addRecord(this.score, this.stageIdx + 1);
             this.scene.start('MainMenu');
-        }, 0x9a5f33).root);
+        }, 0x9a5f33).root.setScrollFactor(0));
         this.tweens.add({ targets: c, alpha: 1, duration: 300 });
         this.winUi = c;
     }
@@ -2405,16 +2407,16 @@ export class Game extends Scene {
         if (on) {
             this.ctl.releaseAll();
             const c = this.add.container((K - 1) * W / 2, (K - 1) * H / 2).setScrollFactor(0).setDepth(2000);
-            const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive();
+            const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setScrollFactor(0).setInteractive();
             c.add(bg);
             c.add(label(this, W / 2, H / 2 - 90, 'DURAKLATILDI', { size: 28, color: '#ffc23c' }));
             c.add(label(this, W / 2, H / 2 - 56, 'Çay molası!', { size: 13 }));
-            c.add(menuButton(this, W / 2, H / 2, 200, 46, 'DEVAM ET', () => this.setPaused(false)).root);
+            c.add(menuButton(this, W / 2, H / 2, 200, 46, 'DEVAM ET', () => this.setPaused(false)).root.setScrollFactor(0));
             c.add(menuButton(this, W / 2, H / 2 + 64, 200, 40, 'ANA MENÜ', () => {
                 this.setPaused(false);
                 Save.addRecord(this.score, this.stageIdx + 1);
                 this.scene.start('MainMenu');
-            }, 0x9a5f33).root);
+            }, 0x9a5f33).root.setScrollFactor(0));
             this.pauseUi = c;
         } else {
             this.pauseUi?.destroy();
