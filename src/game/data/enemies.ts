@@ -28,7 +28,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
     rifle: { name: 'Kiralık Asker', hp: 3, w: 38, h: 78, scale: 1.7, walk: 16, score: 100, pompa: 3, fire: [2.0, 3.0], burst: 1, bulletSpeed: 170, armor: 1, flies: false },
     // gummy-bear paratroopers (the Director only ever drops them in by parachute)
     jelibon: { name: 'Jelibon Avcısı', hp: 3, w: 32, h: 62, scale: 1.45, walk: 14, score: 150, pompa: 3, fire: [2.0, 3.0], burst: 1, bulletSpeed: 170, armor: 1, flies: false },
-    armor: { name: 'Tepsili Asker', hp: 12, w: 48, h: 82, scale: 1.7, walk: 10, score: 250, pompa: 6, fire: [2.6, 3.4], burst: 1, bulletSpeed: 180, armor: 0.6, flies: false },
+    armor: { name: 'Salata Dönerci', hp: 12, w: 48, h: 82, scale: 1.7, walk: 10, score: 250, pompa: 6, fire: [2.6, 3.4], burst: 1, bulletSpeed: 180, armor: 0.6, flies: false },
     heavy: { name: 'Rehber Hoca', hp: 30, w: 58, h: 88, head: 132, scale: 1.7, walk: 6, score: 400, pompa: 8, fire: [2.8, 3.6], burst: 2, bulletSpeed: 190, armor: 0.85, flies: false },
     // rides a red Vespa in from the LEFT (see updateScooter in Game.ts), so he never walks with the scroll
     teacher: { name: 'Motor Ahmet', hp: 22, w: 74, h: 100, head: 130, scale: 1.7, walk: 0, score: 350, pompa: 7, fire: [2.2, 3.0], burst: 2, bulletSpeed: 185, armor: 0.8, flies: false },
