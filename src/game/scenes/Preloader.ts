@@ -61,7 +61,7 @@ export class Preloader extends Scene {
         img('barrel', 'scenery/props/varil.png');
         img('beanbag', 'scenery/props/armut_koltuk.png');
 
-        for (const n of ['btn_fire', 'btn_bomb', 'btn_jump', 'btn_duck', 'btn_pompa', 'plate_big']) img(n, `ui/${n}.png`);
+        for (const n of ['btn_fire', 'btn_bomb', 'btn_jump', 'btn_duck', 'btn_pompa', 'plate_big', 'ui_bomb_pip', 'ui_bomb_pip_off', 'title_logo']) img(n, `ui/${n}.png`);
         for (const f of FRIENDS) if (f.art) img(`friend_${f.id}`, `friends/${f.art}`);
         for (const f of FRIENDS) if (f.photo && !f.art) img(`friend_raw_${f.id}`, `friends/${f.photo}`);
         sheet('fx_boom', 'effects/patlama.png', 96, 96);

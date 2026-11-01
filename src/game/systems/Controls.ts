@@ -71,7 +71,7 @@ export class Controls {
         this.btns.pompa.root.setVisible(false).setScale(0);
 
         for (let i = 0; i < 3; i++) {
-            const pip = scene.add.image(-15 + i * 15, -58, 'pr_el_bombasi').setScale(0.46);
+            const pip = scene.add.image(-18 + i * 18, -58, 'ui_bomb_pip').setScale(BTN_PX);
             this.btns.bomb.root.add(pip);
             this.pips.push(pip);
         }
@@ -179,7 +179,7 @@ export class Controls {
 
     /** `bombs`/`maxBombs`: charges, `cd` 0..1 recharge progress; `pompa` 0..1 meter. */
     update(dt: number, bombs: number, maxBombs: number, cd: number, pompa: number, pompaActive: boolean) {
-        this.pips.forEach((p, i) => p.setVisible(i < maxBombs).setAlpha(i < bombs ? 1 : 0.25));
+        this.pips.forEach((p, i) => p.setVisible(i < maxBombs).setTexture(i < bombs ? 'ui_bomb_pip' : 'ui_bomb_pip_off').setAlpha(i < bombs ? 1 : 0.7));
         this.bombCd.clear();
         if (bombs < maxBombs) {
             // the bomb's round body sits ~10 units below the art's centre: ring a little outside it, on a dark track
