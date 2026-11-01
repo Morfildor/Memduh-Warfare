@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { DIALOGUE, Line, SPEAKERS, Topic } from '../data/dialogue';
-import { FONT, K, W } from '../constants';
+import { FONT, K, TYPE, W } from '../constants';
 
 interface Options {
     /** `high` interrupts whatever is playing; `normal` waits its turn; `low` is dropped when busy. */
@@ -34,16 +34,16 @@ export class DialogueBox {
     constructor(scene: Phaser.Scene, y: number) {
         this.shownY = y;
         this.bg = scene.add.graphics();
-        this.bg.fillStyle(0x1b0f12, 0.82).fillRoundedRect(0, 0, W - 20, 62, 10);
+        this.bg.fillStyle(0x1b0f12, 0.9).fillRoundedRect(0, 0, W - 20, 62, 10);
         this.bg.lineStyle(2, 0xffc23c, 1).strokeRoundedRect(0, 0, W - 20, 62, 10);
         this.portrait = scene.add.image(8, 8, 'p_memduh_normal').setOrigin(0, 0).setScale(0.66);
         this.nameText = scene.add
-            .text(66, 5, '', { fontFamily: FONT, fontSize: '11px', color: '#ffc23c', resolution: K })
+            .text(66, 5, '', { fontFamily: FONT, fontSize: `${TYPE.small}px`, color: '#ffc23c', resolution: K })
             .setOrigin(0, 0);
         this.body = scene.add
             .text(66, 18, '', {
-                fontFamily: FONT, fontSize: '13px', color: '#fff1cf', resolution: K,
-                wordWrap: { width: W - 20 - 76 }, lineSpacing: 1,
+                fontFamily: FONT, fontSize: `${TYPE.body}px`, color: '#fff1cf', resolution: K,
+                wordWrap: { width: W - 20 - 76 }, lineSpacing: 2,
             })
             .setOrigin(0, 0);
         this.root = scene.add.container(10, y - 80, [this.bg, this.portrait, this.nameText, this.body]);

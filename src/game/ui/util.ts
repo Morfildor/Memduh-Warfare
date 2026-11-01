@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { FONT, H, K, W } from '../constants';
+import { FONT, H, K, TYPE, W, strokeFor } from '../constants';
 
 /** Every scene renders its 360xH design space at K times resolution. */
 export function setupCamera(scene: Phaser.Scene) {
@@ -23,13 +23,13 @@ export interface TextOpts {
 }
 
 export function label(scene: Phaser.Scene, x: number, y: number, text: string, o: TextOpts = {}) {
-    const size = o.size ?? 14;
+    const size = o.size ?? TYPE.body;
     const t = scene.add.text(x, y, text, {
         fontFamily: FONT,
         fontSize: `${size}px`,
         color: o.color ?? '#fff1cf',
         stroke: o.stroke ?? '#1b0f12',
-        strokeThickness: o.strokeW ?? Math.max(2, Math.round(size / 5)),
+        strokeThickness: o.strokeW ?? strokeFor(size),
         align: o.align ?? 'center',
         resolution: K,
         wordWrap: o.wrap ? { width: o.wrap } : undefined,

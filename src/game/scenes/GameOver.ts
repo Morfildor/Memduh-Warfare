@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { GROUND_Y, H, W } from '../constants';
+import { GROUND_Y, H, TYPE, W } from '../constants';
 import { FOOT_Y } from '../data/anims';
 import { Backdrop } from '../systems/Backdrop';
 import { Sound } from '../systems/Audio';
@@ -33,12 +33,12 @@ export class GameOver extends Scene {
         const newBest = data.rank === 0 && data.score > 0;
         const title = label(this, W / 2, 92, 'ÇAY BİTTİ', { size: 48, color: '#ffc23c', stroke: '#6a1d00', strokeW: 9 }).setDepth(10);
         this.tweens.add({ targets: title, scale: { from: 0.2, to: 1 }, duration: 420, ease: 'Back.out' });
-        label(this, W / 2, 138, 'Bir çay molası daha alalım mı?', { size: 12, color: '#fff1cf' }).setDepth(10);
+        label(this, W / 2, 138, 'Bir çay molası daha alalım mı?', { size: TYPE.body, color: '#fff1cf' }).setDepth(10);
 
         const panel = this.add.graphics().setDepth(9);
         panel.fillStyle(0x2a1710, 0.92).fillRoundedRect(30, 168, W - 60, 168, 12);
         panel.lineStyle(3, 0xffc23c, 1).strokeRoundedRect(30, 168, W - 60, 168, 12);
-        label(this, W / 2, 190, 'SKOR', { size: 12, color: '#d9b98a' }).setDepth(10);
+        label(this, W / 2, 190, 'SKOR', { size: TYPE.small, color: '#e6c79a' }).setDepth(10);
         const sc = label(this, W / 2, 224, '0', { size: 40, color: '#fff1cf' }).setDepth(10);
         const counter = { v: 0 };
         this.tweens.add({ targets: counter, v: data.score, duration: 900, ease: 'Cubic.out', onUpdate: () => sc.setText(String(Math.round(counter.v))) });
@@ -46,10 +46,10 @@ export class GameOver extends Scene {
             const nb = label(this, W / 2, 258, 'YENİ REKOR!', { size: 18, color: '#ff7a21' }).setDepth(10);
             this.tweens.add({ targets: nb, scale: { from: 0.9, to: 1.15 }, duration: 350, yoyo: true, repeat: -1 });
         } else {
-            label(this, W / 2, 258, `Rekor: ${Save.best}`, { size: 13, color: '#ffe0a0' }).setDepth(10);
+            label(this, W / 2, 258, `Rekor: ${Save.best}`, { size: TYPE.body, color: '#ffe0a0' }).setDepth(10);
         }
-        label(this, W / 2, 292, `Bölüm ${data.stage}   •   ${data.kills} düşman   •   en iyi kombo ${data.combo}`, { size: 10, color: '#d9b98a', strokeW: 2 }).setDepth(10);
-        label(this, W / 2, 314, `Rekor sırası: ${data.rank >= 0 ? data.rank + 1 : '—'}`, { size: 10, color: '#d9b98a', strokeW: 2 }).setDepth(10);
+        label(this, W / 2, 292, `Bölüm ${data.stage}   •   ${data.kills} düşman   •   en iyi kombo ${data.combo}`, { size: TYPE.micro, color: '#e6c79a' }).setDepth(10);
+        label(this, W / 2, 314, `Rekor sırası: ${data.rank >= 0 ? data.rank + 1 : '—'}`, { size: TYPE.micro, color: '#e6c79a' }).setDepth(10);
 
         this.add.image(86, GROUND_Y + 2, 'shadow').setScale(5, 3).setDepth(8);
         this.hero = this.add.sprite(96, GROUND_Y + 6, 'memduh_death', 0).setOrigin(0.5, FOOT_Y).setScale(3).setDepth(10);

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { W } from '../constants';
+import { TYPE, W } from '../constants';
 import { label } from './util';
 
 /** All in-run readouts. Lives inside the shared UI container so screen shake never moves it. */
@@ -29,23 +29,23 @@ export class Hud {
         }
         this.score = label(scene, W - 50, 6, '0', { size: 24, color: '#fff1cf', originX: 1, originY: 0, align: 'right' });
         ui.add(this.score);
-        this.combo = label(scene, W - 50, 36, '', { size: 14, color: '#ffc23c', originX: 1, originY: 0, align: 'right' });
+        this.combo = label(scene, W - 50, 36, '', { size: TYPE.body, color: '#ffc23c', originX: 1, originY: 0, align: 'right' });
         ui.add(this.combo);
         this.comboBar = scene.add.graphics();
         ui.add(this.comboBar);
         this.pompaBar = scene.add.graphics();
         ui.add(this.pompaBar);
-        this.pompaText = label(scene, 76, 59, 'POMPA GÜCÜ', { size: 9, color: '#fff1cf', strokeW: 3 });
+        this.pompaText = label(scene, 76, 59, 'POMPA GÜCÜ', { size: TYPE.micro, color: '#fff1cf', strokeW: 3 });
         ui.add(this.pompaText);
 
         // below the dialogue + cameo strips at the top
-        this.banner = label(scene, W / 2, 310, '', { size: 34, color: '#ffc23c', stroke: '#6a1d00', strokeW: 8 }).setAlpha(0);
-        this.bannerSub = label(scene, W / 2, 348, '', { size: 16, color: '#fff1cf', strokeW: 5 }).setAlpha(0);
+        this.banner = label(scene, W / 2, 310, '', { size: TYPE.title, color: '#ffc23c', stroke: '#6a1d00', strokeW: 8 }).setAlpha(0);
+        this.bannerSub = label(scene, W / 2, 348, '', { size: TYPE.lead, color: '#fff1cf', strokeW: 5 }).setAlpha(0);
         ui.add([this.banner, this.bannerSub]);
         this.bossBar = scene.add.graphics();
-        this.bossName = label(scene, W / 2, 101, '', { size: 11, color: '#ffb0a0', strokeW: 3 }).setVisible(false);
+        this.bossName = label(scene, W / 2, 101, '', { size: TYPE.small, color: '#ffc0b0', strokeW: 4 }).setVisible(false);
         ui.add([this.bossBar, this.bossName]);
-        this.status = label(scene, W / 2, 392, '', { size: 18, color: '#ffffff', strokeW: 5 }).setAlpha(0);
+        this.status = label(scene, W / 2, 392, '', { size: TYPE.lead, color: '#ffffff', strokeW: 5 }).setAlpha(0);
         ui.add(this.status);
 
         // pause button

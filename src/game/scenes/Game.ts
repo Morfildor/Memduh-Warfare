@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import * as Phaser from 'phaser';
 import { CAMEO_ENEMIES, CAMEO_ENEMY_EVERY, CAMEO_ENEMY_FIRST } from '../data/cameoEnemies';
-import { FONT, GROUND_Y, H, K, PLAYER_X, W } from '../constants';
+import { FONT, GROUND_Y, H, K, PLAYER_X, TYPE, W } from '../constants';
 import { FOOT_Y, Humanoid, SHOOT_TIMING, THROW, THROW_POMPA } from '../data/anims';
 import { EnemyDef, EnemyKind, ENEMIES } from '../data/enemies';
 import { endlessStage, StageDef, STAGES } from '../data/stages';
@@ -1435,8 +1435,8 @@ export class Game extends Scene {
 
     /** Soldiers get small, quiet type. A cameo character's name is the joke, so it goes on a gold plate. */
     private styleTag(tag: Phaser.GameObjects.Text, cameo: boolean) {
-        if (cameo) tag.setFontSize(15).setColor('#1b0f12').setStroke('#1b0f12', 0).setBackgroundColor('#ffc23c').setPadding(8, 3, 8, 3).setAlpha(1);
-        else tag.setFontSize(11).setColor('#fff1a8').setStroke('#1b0f12', 3).setBackgroundColor(null as unknown as string).setPadding(0).setAlpha(0.92);
+        if (cameo) tag.setFontSize(TYPE.plate).setColor('#1b0f12').setStroke('#1b0f12', 0).setBackgroundColor('#ffc23c').setPadding(8, 3, 8, 3).setAlpha(1);
+        else tag.setFontSize(13).setColor('#fff6c8').setStroke('#1b0f12', 4).setBackgroundColor(null as unknown as string).setPadding(2, 2, 2, 1).setAlpha(1);
     }
 
     /** The enemy's name rides above their head: the names are half the joke, so they are always readable. */
@@ -1453,9 +1453,10 @@ export class Game extends Scene {
             e.tag.setScale(1.7);
             this.tweens.add({ targets: e.tag, scale: 1, duration: 420, ease: 'Back.out' });
         }
-        // a paratrooper's canopy is above his head, so the name goes above that
-        const lift = e.st === 'drop' ? 50 : 0;
-        e.tag.setPosition(e.x, e.y - (e.def.head ? e.def.head + 8 : e.def.h + 6) - lift);
+        // the name sits just above the topmost drawn pixel (def.head); a paratrooper's canopy (32x52 texture, see the drop update) is above that
+        const d = e.def;
+        const top = e.st === 'drop' ? Math.max(d.head ?? 0, d.h * 1.02 + 52 * d.scale * 0.95) : d.head ?? d.h + 24;
+        e.tag.setPosition(e.x, e.y - top - 6);
     }
 
     /**

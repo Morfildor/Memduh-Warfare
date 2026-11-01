@@ -47,7 +47,7 @@ export class Controls {
             const face = scene.add.image(0, 0, tex).setScale(scale);
             const shadow = scene.add.image(0, 5, tex).setScale(scale).setTint(0x000000).setAlpha(0.35);
             const cap = scene.add
-                .text(0, r + 10, caption, { fontFamily: FONT, fontSize: '12px', color: '#fff8e0', stroke: '#1b0f12', strokeThickness: 4, resolution: K })
+                .text(0, r + 10, caption, { fontFamily: FONT, fontSize: '12px', color: '#fff8e0', stroke: '#1b0f12', strokeThickness: 3, resolution: K })
                 .setOrigin(0.5);
             const root = scene.add.container(x, y, [shadow, face, cap]);
             ui.add(root);

@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import * as Phaser from 'phaser';
-import { GROUND_Y, H, W } from '../constants';
+import { GROUND_Y, H, TYPE, W } from '../constants';
 import { FOOT_Y } from '../data/anims';
 import { Backdrop } from '../systems/Backdrop';
 import { Sound } from '../systems/Audio';
@@ -68,7 +68,7 @@ export class MainMenu extends Scene {
         set.setPosition(bx + 57, rec.y);
 
         const best = Save.best;
-        label(this, W / 2, H - 14, best > 0 ? `EN YÜKSEK SKOR: ${best}` : 'İlk rekoru sen kır!', { size: 11, color: '#ffe0a0' }).setDepth(200);
+        label(this, W / 2, H - 14, best > 0 ? `EN YÜKSEK SKOR: ${best}` : 'İlk rekoru sen kır!', { size: TYPE.small, color: '#ffe0a0' }).setDepth(200);
 
         // first touch unlocks audio on iOS/Android
         this.input.once('pointerdown', () => Sound.unlock());
@@ -108,8 +108,8 @@ export class MainMenu extends Scene {
             ];
             rows.forEach(([h, d], i) => {
                 const yy = -ph / 2 + 62 + i * 46;
-                c.add(label(this, -pw / 2 + 16, yy, h, { size: 13, color: '#ff9a3c', originX: 0, align: 'left' }));
-                c.add(label(this, -pw / 2 + 16, yy + 18, d, { size: 11, originX: 0, align: 'left', wrap: pw - 30, strokeW: 3 }));
+                c.add(label(this, -pw / 2 + 16, yy, h, { size: TYPE.body, color: '#ffa94a', originX: 0, align: 'left' }));
+                c.add(label(this, -pw / 2 + 16, yy + 18, d, { size: TYPE.small, originX: 0, align: 'left', wrap: pw - 30 }));
             });
         } else if (kind === 'records') {
             const recs = Save.records;
@@ -118,7 +118,7 @@ export class MainMenu extends Scene {
                 const yy = -ph / 2 + 64 + i * 42;
                 c.add(label(this, -pw / 2 + 18, yy, `${i + 1}.`, { size: 18, color: '#ffc23c', originX: 0 }));
                 c.add(label(this, -pw / 2 + 52, yy - 6, String(r.score), { size: 18, originX: 0 }));
-                c.add(label(this, -pw / 2 + 52, yy + 12, `Bölüm ${r.stage} • ${r.date}`, { size: 10, color: '#d9b98a', originX: 0, strokeW: 2 }));
+                c.add(label(this, -pw / 2 + 52, yy + 12, `Bölüm ${r.stage} • ${r.date}`, { size: TYPE.micro, color: '#e6c79a', originX: 0 }));
             });
         } else {
             const mk = (yy: number, name: string, get: () => boolean, set: (v: boolean) => void) => {
@@ -133,7 +133,7 @@ export class MainMenu extends Scene {
             };
             mk(-30, 'MÜZİK', () => Save.music, (v) => Sound.setMusic(v));
             mk(30, 'SES EFEKTLERİ', () => Save.sfx, (v) => Sound.setSfx(v));
-            c.add(label(this, 0, 100, 'Ayarlar bu cihazda saklanır.', { size: 10, color: '#d9b98a' }));
+            c.add(label(this, 0, 100, 'Ayarlar bu cihazda saklanır.', { size: TYPE.micro, color: '#e6c79a' }));
         }
         const close = menuButton(this, 0, ph / 2 - 30, 140, 34, 'KAPAT', () => {
             c.destroy();

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { FONT, H, K, W } from '../constants';
+import { FONT, H, K, TYPE, W, strokeFor } from '../constants';
 
 interface Particle {
     s: Phaser.GameObjects.Image;
@@ -196,7 +196,10 @@ export class Fx {
         f.on = true;
         f.life = 0.8;
         f.vy = -46;
-        f.t.setText(str).setColor(color).setFontSize(size).setPosition(x, y).setScale(0.4).setAlpha(1).setVisible(true);
+        // one style call (each setter would re-render and re-upload the texture); small callouts never drop below the type scale's floor
+        size = Math.max(TYPE.small, size);
+        f.t.setStyle({ fontFamily: FONT, fontSize: `${size}px`, color, stroke: '#1b0f12', strokeThickness: strokeFor(size), resolution: K });
+        f.t.setText(str).setPosition(x, y).setScale(0.4).setAlpha(1).setVisible(true);
     }
 
     // --- screen effects ---

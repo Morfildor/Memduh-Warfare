@@ -27,7 +27,7 @@ export class ComicBubble {
         this.body = scene.add.graphics();
         this.tail = scene.add.graphics();
         this.plate = scene.add.graphics();
-        this.line = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '15px', color: '#1b0f12', align: 'center', lineSpacing: 2, resolution: K, wordWrap: { width: WRAP } }).setOrigin(0.5, 0.5);
+        this.line = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '15px', color: '#1b0f12', align: 'center', lineSpacing: 5, resolution: K, wordWrap: { width: WRAP } }).setOrigin(0.5, 0.5);
         this.name = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '16px', color: '#1b0f12', resolution: K }).setOrigin(0, 0.5);
         this.root = scene.add.container(0, 0, [this.body, this.tail, this.line, this.plate, this.name]).setDepth(41).setVisible(false);
     }
