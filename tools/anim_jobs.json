@@ -140,6 +140,35 @@
   "colors": 30,
   "ref": "first"
  },
+ "trucker_walk": {
+  "job": "42786676-51d2-40c1-a1e8-6120e5f038c3",
+  "pal": "trucker",
+  "colors": 30,
+  "cell": [
+   128,
+   96
+  ]
+ },
+ "trucker_shoot": {
+  "job": "0f8c207c-9525-40dc-a351-67e096acc9a6",
+  "pal": "trucker",
+  "colors": 30,
+  "cell": [
+   128,
+   96
+  ],
+  "ref": "first"
+ },
+ "trucker_death": {
+  "job": "2fba74db-3500-40f4-a76b-f3c0cc43d7f4",
+  "pal": "trucker",
+  "colors": 30,
+  "cell": [
+   128,
+   96
+  ],
+  "ref": "first"
+ },
  "tank_idle": {
   "job": "487dbc45-7c5a-4faf-a269-047121cbf879",
   "pal": "tank",

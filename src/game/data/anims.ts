@@ -6,6 +6,8 @@ export const SHEETS: { key: string; w: number; h: number }[] = [
     ...['rifle', 'jelibon', 'armor', 'heavy', 'chem', 'dinho'].flatMap((k) => ['walk', 'shoot', 'death'].map((n) => ({ key: `${k}_${n}`, w: 96, h: 96 }))),
     // Motor Ahmet on his Vespa: wider cells (walk = riding)
     ...['walk', 'shoot', 'death'].map((n) => ({ key: `teacher_${n}`, w: 128, h: 96 })),
+    // Kamyoncu Türkay in his tiny truck: same wide cells (walk = driving)
+    ...['walk', 'shoot', 'death'].map((n) => ({ key: `trucker_${n}`, w: 128, h: 96 })),
     { key: 'tank_idle', w: 128, h: 96 },
     { key: 'tank_fire', w: 128, h: 96 },
     { key: 'heli_fly', w: 128, h: 96 },
@@ -16,7 +18,7 @@ export const SHEETS: { key: string; w: number; h: number }[] = [
 /** Origin that puts (x, y) at the soles of the feet (row 90 of 96). */
 export const FOOT_Y = 91 / 96;
 
-export type Humanoid = 'rifle' | 'jelibon' | 'armor' | 'heavy' | 'teacher' | 'chem' | 'dinho';
+export type Humanoid = 'rifle' | 'jelibon' | 'armor' | 'heavy' | 'teacher' | 'chem' | 'dinho' | 'trucker';
 
 /** When each shooter's animation actually fires (frame) and how long the whole animation lasts. */
 export const SHOOT_TIMING: Record<Humanoid, { frame: number; dur: number }> = {
@@ -27,6 +29,7 @@ export const SHOOT_TIMING: Record<Humanoid, { frame: number; dur: number }> = {
     teacher: { frame: 3, dur: 1.7 },
     chem: { frame: 10, dur: 1.05 }, // the flask's green splash leaves on frame 10
     dinho: { frame: 9, dur: 1.05 }, // the football has left her hand by frame 9
+    trucker: { frame: 7, dur: 1.4 }, // takes the butt from his mouth, and his arm snaps out on frame 7
 };
 
 /** Memduh's grenade throw plays frames 4..15 and lets go of the grenade on frame 12. */

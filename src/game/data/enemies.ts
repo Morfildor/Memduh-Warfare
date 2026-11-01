@@ -1,4 +1,4 @@
-export type EnemyKind = 'rifle' | 'jelibon' | 'armor' | 'heavy' | 'teacher' | 'chem' | 'dinho' | 'drone' | 'heli' | 'tank' | 'chief';
+export type EnemyKind = 'rifle' | 'jelibon' | 'armor' | 'heavy' | 'teacher' | 'chem' | 'dinho' | 'trucker' | 'drone' | 'heli' | 'tank' | 'chief';
 
 export interface EnemyDef {
     name: string;
@@ -36,6 +36,8 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
     chem: { name: 'Barbie', hp: 20, w: 42, h: 84, head: 128, scale: 1.55, walk: 8, score: 350, pompa: 7, fire: [2.4, 3.2], burst: 1, bulletSpeed: 180, armor: 1, flies: false },
     // the other chemistry teacher: lobs a football that explodes where it lands, on a telegraphed ring (see enemyShoot in Game.ts)
     dinho: { name: 'Kimyacı Ronaldinho', hp: 20, w: 42, h: 84, head: 129, scale: 1.55, walk: 8, score: 350, pompa: 7, fire: [2.6, 3.4], burst: 1, bulletSpeed: 0, armor: 1, flies: false },
+    // much too big for his tiny truck: rolls in, parks and flicks lit cigarette butts at Memduh (see enemyShoot in Game.ts)
+    trucker: { name: 'Kamyoncu Türkay', hp: 24, w: 74, h: 90, head: 115, scale: 1.6, walk: 6, score: 350, pompa: 7, fire: [2.2, 3.0], burst: 2, bulletSpeed: 175, armor: 0.8, flies: false },
     // flies a bombing run across the screen and drops telegraphed bombs straight down (see updateDrone in Game.ts)
     drone: { name: 'Bombacı Drone', hp: 3, w: 70, h: 56, head: 105, scale: 1.3, walk: 0, score: 300, pompa: 5, fire: [0.9, 1.2], burst: 1, bulletSpeed: 0, armor: 1, flies: true },
     chief: { name: 'Başmüfettiş', hp: 420, w: 138, h: 78, head: 146, scale: 1.75, walk: 0, score: 6000, pompa: 40, fire: [0, 0], burst: 1, bulletSpeed: 0, armor: 0.6, flies: true },

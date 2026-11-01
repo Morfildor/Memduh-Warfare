@@ -95,6 +95,15 @@ export function makeTextures(scene: Phaser.Scene) {
             c.fillRect(x, y, 1, 1);
         }));
     });
+    // Kamyoncu Türkay's flicked cigarette butt (drawn at 2x like the football; it spins in flight, see the enemy bullet loop in Game.ts)
+    canvasTex(scene, 'cigbutt', 10, 4, (c) => {
+        const cols: Record<string, string> = { k: '#1b0f12', f: '#e0a050', w: '#f7f3ea', e: '#ff7a21', h: '#ffe36b', r: '#d7263d' };
+        ['.kkkkkkkk.', 'kfffwwwweh', 'kfffwwwwer', '.kkkkkkkk.'].forEach((row, y) => [...row].forEach((ch, x) => {
+            if (ch === '.') return;
+            c.fillStyle = cols[ch];
+            c.fillRect(x, y, 1, 1);
+        }));
+    });
     // Memduh's tracer: a hot white head, a yellow body and a fading orange tail (drawn pointing right, rotated to fly)
     canvasTex(scene, 'bolt', 16, 6, (c) => {
         const rows: [number, number][] = [[0, 0.18], [1, 0.55], [2, 1], [3, 1], [4, 0.55], [5, 0.18]];

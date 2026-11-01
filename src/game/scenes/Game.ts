@@ -71,6 +71,7 @@ const ENEMY_QUOTES: Partial<Record<EnemyKind, string[]>> = {
     heavy: ['Armutlara taklayla girmeyin. Bıktım'], // the user's joke: keep this wording exactly
     chem: ['Sarhoş mu geldiniz siz buraya?'], // the user's joke: keep this wording exactly
     dinho: ['Memduh kafa topu geliyor yakala'], // the user's joke: keep this wording exactly
+    trucker: ['Sollama beni Memduh!', 'İzmarit bedava, yol parası ayrı.'],
     tank: ['Bu ayın taksidi nerde lan?', 'Ödemeler gecikti. Perişan edicem sizi.'], // the user's jokes: keep this wording exactly
 };
 
@@ -504,6 +505,7 @@ export class Game extends Scene {
             e.s.setFlipX(false).setPosition(e.x, e.y);
             this.fx.text(70, GROUND_Y - 120, 'DIT DIT!', '#ff5a3c', 14);
         }
+        if (kind === 'trucker') this.fx.text(W - 70, GROUND_Y - 150, 'DÜÜÜT!', '#ffc23c', 16);
         return e;
     }
 
@@ -1242,6 +1244,11 @@ export class Game extends Scene {
             b.x += b.vx * dt - scroll * 0.0;
             b.y += b.vy * dt;
             b.s.setPosition(b.x, b.y);
+            const butt = b.s.texture.key === 'cigbutt';
+            if (butt) {
+                b.s.setRotation(b.s.rotation - 14 * dt); // tumbles end over end, shedding ash
+                if (Math.random() < dt * 22) this.fx.sparks(b.x, b.y, 1, 0xff7a21, 30);
+            }
             if (b.x < -20 || b.x > W + 40 || b.y > GROUND_Y + 4 || b.y < -40) {
                 b.on = false; b.s.setVisible(false);
                 continue;
@@ -1253,6 +1260,7 @@ export class Game extends Scene {
                 this.hurtPlayer(1);
                 b.on = false; b.s.setVisible(false);
                 this.fx.sparks(b.x, b.y, 6, 0xff7a21, 140);
+                if (butt) this.fx.text(p.x, p.y - 96, 'CIZZZ!', '#ffb21e', 14);
                 continue;
             }
             if (!b.passed && b.x < p.x - 4) {
@@ -1534,8 +1542,9 @@ export class Game extends Scene {
         if (!b) return;
         // the Vespa rider holds his pistol out at arm's length, higher and further forward than a standing soldier
         const chem = e.kind === 'chem';
-        const mx = e.kind === 'teacher' ? e.x - 70 : chem ? e.x - 42 : e.x - 30;
-        const my = e.kind === 'teacher' ? e.y - 88 : chem ? e.y - 66 : e.y - 46;
+        const butt = e.kind === 'trucker';
+        const mx = e.kind === 'teacher' ? e.x - 70 : chem ? e.x - 42 : butt ? e.x - 40 : e.x - 30;
+        const my = e.kind === 'teacher' ? e.y - 88 : chem ? e.y - 66 : butt ? e.y - 59 : e.y - 46;
         // Hired guns are bad shots. Each bullet is aimed to arrive at one of three heights above the ground: 76 whizzes over
         // a standing Memduh (that is what makes "ÇOK YAKINDI!" happen), 56 is head height (duck it), 28 is chest height
         // (jump it). The bullet keeps 0.6 of its aim offset (vy * 0.6 below), hence the maths for the aim point.
@@ -1545,9 +1554,14 @@ export class Game extends Scene {
         const ang = Math.atan2(p.y - aimH - my, p.x - mx);
         b.on = true; b.mortar = false; b.passed = false; b.x = mx; b.y = my;
         b.vx = Math.cos(ang) * e.def.bulletSpeed; b.vy = Math.sin(ang) * e.def.bulletSpeed * 0.6;
-        b.s.setVisible(true).setTexture('ebullet').setPosition(mx, my).setScale(2).setRotation(0).setTint(chem ? 0x6bff5a : 0xffffff);
+        b.s.setVisible(true).setTexture(butt ? 'cigbutt' : 'ebullet').setPosition(mx, my).setScale(2).setRotation(0).setTint(chem ? 0x6bff5a : 0xffffff);
         b.marker.setVisible(false);
         if (chem) this.fx.sparks(mx, my, 5, 0x6bff5a, 110, -1);
+        if (butt) {
+            this.fx.sparks(mx, my, 4, 0xffb21e, 70, -1);
+            Sound.play('ui'); // a flick, not a gunshot
+            return;
+        }
         const f = this.flashes.find((q) => q.t <= 0);
         if (f) {
             f.t = 0.06;
@@ -2199,7 +2213,7 @@ export class Game extends Scene {
                 e.vx = 70 + e.kb * 0.3;
                 if (Math.random() < 0.4) this.fx.text(e.x, e.y - e.def.h - 22, SHOUTS[Math.floor(Math.random() * SHOUTS.length)], '#ffd23c', 16);
             }
-            if (Math.random() < 0.05 + (e.kind === 'armor' || e.kind === 'heavy' || e.kind === 'teacher' || e.kind === 'chem' || e.kind === 'dinho' ? 0.09 : 0)) this.spawnPickup(this.randomPickup(), e.x, GROUND_Y - 40);
+            if (Math.random() < 0.05 + (e.kind === 'armor' || e.kind === 'heavy' || e.kind === 'teacher' || e.kind === 'chem' || e.kind === 'dinho' || e.kind === 'trucker' ? 0.09 : 0)) this.spawnPickup(this.randomPickup(), e.x, GROUND_Y - 40);
         }
         if (this.kills === 1) this.dlg.say('firstKill', { priority: 'high' });
         else if (this.combo === 8) this.dlg.say('combo');
