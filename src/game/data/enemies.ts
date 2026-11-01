@@ -42,5 +42,5 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
     drone: { name: 'Bombacı Drone', hp: 3, w: 70, h: 56, head: 105, scale: 1.3, walk: 0, score: 300, pompa: 5, fire: [0.9, 1.2], burst: 1, bulletSpeed: 0, armor: 1, flies: true },
     chief: { name: 'Başmüfettiş', hp: 420, w: 138, h: 78, head: 146, scale: 1.75, walk: 0, score: 6000, pompa: 40, fire: [0, 0], burst: 1, bulletSpeed: 0, armor: 0.6, flies: true },
     heli: { name: 'Stajyer Müfettiş', hp: 16, w: 90, h: 58, head: 109, scale: 1.3, walk: 0, score: 500, pompa: 9, fire: [3.0, 4.0], burst: 1, bulletSpeed: 0, armor: 1, flies: true },
-    tank: { name: 'Muhasebeci Tankı', hp: 200, w: 132, h: 92, head: 138, scale: 1.85, walk: 0, score: 3000, pompa: 40, fire: [0, 0], burst: 1, bulletSpeed: 0, armor: 0.2, flies: false },
+    tank: { name: 'Muhasebeci Tankı', hp: 67, w: 132, h: 92, head: 138, scale: 1.85, walk: 0, score: 3000, pompa: 40, fire: [0, 0], burst: 1, bulletSpeed: 0, armor: 0.2, flies: false },
 };

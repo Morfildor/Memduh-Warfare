@@ -53,7 +53,7 @@ const DREAMS = ['DÜRÜM', 'ÇAY', 'ARMUT', 'TAKLA', 'PATSO', 'MAAŞ', 'İZİN',
 const PICKUP_GAP = 18;
 const FRIEND_GAP = 14;
 /** seconds between the friends who show up on their own (the first one comes sooner) */
-const CAMEO_EVERY: [number, number] = [14, 19];
+const CAMEO_EVERY: [number, number] = [8, 13];
 /** a patso that is still this high above the ground when picked up was caught in mid-air */
 const PATSO_AIR_Y = GROUND_Y - 80;
 const HACK_TIME = 0.6;
@@ -763,13 +763,13 @@ export class Game extends Scene {
         this.updateHack(dt);
         this.updateFriendFx(dt);
 
-        // The Pompa team does not wait to be found: a friend crashes in by themselves every half minute or so
+        // The Pompa team does not wait to be found: a random friend crashes in every ten seconds or so, boss fights included
         // (the friend pickups in drops are still there on top of this).
-        // One spotlight at a time: it waits while a title, a balloon, a cameo entrance or a boss entrance is on screen.
-        const spotlight = this.hud.bannerUp || this.bubble.active || this.bubbleQ.length > 0 || this.cameoWait || (!!this.cameoE && this.cameoE.stT < 4) || (!!this.boss && this.boss.alive && this.boss.stT < 4);
+        // One spotlight at a time: it waits while a title, a balloon or a cameo enemy's entrance is on screen.
+        const spotlight = this.hud.bannerUp || this.bubble.active || this.bubbleQ.length > 0 || this.cameoWait || (!!this.cameoE && this.cameoE.stT < 2.5);
         this.cameoCd -= dt;
         if (this.cameoCd <= 0 && !p.dead && this.stageClearT < 0 && !spotlight) {
-            // a friend comes when their power would help (pickFriend); if nobody's would, wait up to 3 s, then the rotation goes on
+            // a friend comes when their power would help (pickFriend); if nobody's would, wait up to 3 s, then anyone may come
             this.targetWait += dt;
             if (this.pickFriend() >= 0 || this.targetWait > 3) {
                 this.targetWait = 0;
@@ -2155,32 +2155,45 @@ export class Game extends Scene {
     private friendReady(f: Friend) {
         switch (f.power) {
             case 'heal': case 'airdrop':
-                return this.p.hp < MAX_HP;
+                return this.p.hp <= MAX_HP - 2; // both glasses of tea are used
             default: // everything else needs somebody to act on
                 return this.enemies.some((e) => e.on && e.alive && e.x > 20 && e.x < W - 20);
         }
     }
 
-    /** The next friend in the rotation whose power helps right now, or -1 when none does. */
-    private pickFriend() {
-        const n = FRIENDS.length;
-        for (let i = 0; i < n; i++) {
-            const k = (this.friendIdx + i) % n;
-            if (this.friendReady(FRIENDS[k])) return k;
+    /** A random friend (never the one who came last), the real Pompa team more often than the dershane cast; -1 when `ok` rules everyone out. */
+    private pickWeighted(ok: (f: Friend) => boolean) {
+        let total = 0;
+        const w = FRIENDS.map((f, i) => {
+            const v = i === this.friendIdx || !ok(f) ? 0 : f.weight ?? 1;
+            total += v;
+            return v;
+        });
+        if (total <= 0) return -1;
+        let r = Math.random() * total;
+        for (let i = 0; i < w.length; i++) {
+            r -= w[i];
+            if (r <= 0 && w[i] > 0) return i;
         }
-        return -1;
+        return w.findIndex((v) => v > 0);
+    }
+
+    /** A random friend whose power helps right now, or -1 when none does. */
+    private pickFriend() {
+        return this.pickWeighted((f) => this.friendReady(f));
     }
 
     /** A Pompa-team friend crashes into the game, shouts their catchphrase and helps out. `id` forces a particular friend. */
     private friendCameo(id?: string) {
         if (!FRIENDS.length) return;
         let k = id ? FRIENDS.findIndex((x) => x.id === id) : this.pickFriend();
-        if (k < 0) k = this.friendIdx % FRIENDS.length; // nobody is useful right now: the rotation goes on
-        this.friendIdx = k + 1;
+        if (k < 0) k = this.pickWeighted(() => true); // nobody is useful right now: anyone may come
+        if (k < 0) k = 0;
+        this.friendIdx = k; // remembered only so the same friend does not come twice in a row
         const f = FRIENDS[k];
         const p = this.p;
-        // whichever way a friend arrived, the next automatic one waits a while
-        this.cameoCd = Math.max(this.cameoCd, 10);
+        // whichever way a friend arrived, the next automatic one waits a little
+        this.cameoCd = Math.max(this.cameoCd, 6);
         this.dlg.hold(this.cameo.show(f, '')); // the strip is the friend's for as long as the banner is up
         Sound.play('pompaReady', 0.6);
         this.fx.flash(0xffe36b, 0.25, 260);

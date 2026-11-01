@@ -27,11 +27,13 @@ export interface Friend {
     photo?: string;
     catchphrases: string[];
     power: FriendPower;
+    /** how likely the friend is to show up next, relative to the others (default 1): the real Pompa team gets 3 */
+    weight?: number;
 }
 
 export const FRIENDS: Friend[] = [
     {
-        id: 'tunc', name: 'TUNÇ', art: 'tunc.png', power: 'hack',
+        id: 'tunc', name: 'TUNÇ', art: 'tunc.png', power: 'hack', weight: 3,
         catchphrases: [
             'Alırım bi takla onur. Taklacı güvercin gibi adamsın.',
             'Ekmek arası salata var. Döner yok bu çölde. Sana yeter al!',
@@ -39,7 +41,7 @@ export const FRIENDS: Friend[] = [
         ],
     },
     {
-        id: 'deniz', name: 'DENİZ', art: 'deniz.png', power: 'slap',
+        id: 'deniz', name: 'DENİZ', art: 'deniz.png', power: 'slap', weight: 3,
         catchphrases: [
             'Motivasyon şaplağı geliyor. Beline doğru *şap şap*',
             'Abi mayonezli balık kraker gönderiyorum.',
@@ -48,14 +50,14 @@ export const FRIENDS: Friend[] = [
         ],
     },
     {
-        id: 'melike', name: 'MELİKE', art: 'melike.png', power: 'anesthesia',
+        id: 'melike', name: 'MELİKE', art: 'melike.png', power: 'anesthesia', weight: 3,
         catchphrases: [
             'Nöbetten yorgun argın geldim. Ama bu anı kaçırmam.',
             'Kahve içmedim. Kafam tuttu lan. Dağılın!',
         ],
     },
     {
-        id: 'tugce', name: 'TUĞÇE', art: 'tugce.png', power: 'heal',
+        id: 'tugce', name: 'TUĞÇE', art: 'tugce.png', power: 'heal', weight: 3,
         catchphrases: [
             'Yalnız dahi anlamındaki de/da ayrı yazılır. Gerçi anlamıyorum arapça herşey.',
         ],
